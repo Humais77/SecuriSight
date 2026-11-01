@@ -1,0 +1,658 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecuriSight | AI Image Detector</title>
+
+  <style>
+    :root {
+      --navy: #101b3f;
+      --green: #22c55e;
+      --bg: #f5f7fb;
+      --muted: #64748b;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--navy);
+      min-height: 100vh;
+    }
+
+    header {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 20px 7%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--green);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+    }
+
+    .tag {
+      background: #dcfce7;
+      color: #15803d;
+      padding: 8px 13px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    main {
+      max-width: 920px;
+      margin: 55px auto;
+      padding: 0 20px;
+    }
+
+    .heading {
+      text-align: center;
+      margin-bottom: 35px;
+    }
+
+    .eyebrow {
+      color: #16a34a;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 15px;
+    }
+
+    h1 {
+      font-size: clamp(30px, 5vw, 43px);
+      letter-spacing: -1.5px;
+      margin-bottom: 15px;
+    }
+
+    .heading p {
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 570px;
+      margin: auto;
+      font-size: 15px;
+    }
+
+    .panel {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 12px 40px rgba(16, 27, 63, 0.05);
+    }
+
+    .dropzone {
+      min-height: 250px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 25px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.2s;
+      background: #fbfcfe;
+    }
+
+    .dropzone:hover,
+    .dropzone.dragging {
+      border-color: var(--green);
+      background: #f0fdf4;
+    }
+
+    .upload-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 18px;
+      background: #dcfce7;
+      color: #15803d;
+      display: grid;
+      place-items: center;
+      font-size: 30px;
+      margin-bottom: 18px;
+    }
+
+    .dropzone h2 {
+      font-size: 18px;
+      margin-bottom: 9px;
+    }
+
+    .dropzone p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .browse {
+      color: #16a34a;
+      font-weight: 700;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .preview-wrap {
+      display: none;
+      margin-top: 22px;
+      border: 1px solid var(--border);
+      padding: 15px;
+      border-radius: 14px;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .preview-wrap.visible {
+      display: flex;
+    }
+
+    #preview {
+      width: 100px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 10px;
+      background: var(--bg);
+    }
+
+    .file-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .file-info strong {
+      display: block;
+      overflow-wrap: anywhere;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .file-info span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .remove-btn {
+      border: none;
+      background: #fee2e2;
+      color: #b91c1c;
+      border-radius: 9px;
+      padding: 9px 12px;
+      cursor: pointer;
+    }
+
+    .analyze-btn {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 22px;
+      background: var(--green);
+      color: white;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .analyze-btn:hover {
+      background: #16a34a;
+    }
+
+    .analyze-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .message {
+      margin-top: 15px;
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .error {
+      color: #b91c1c;
+    }
+
+    .result {
+      display: none;
+      margin-top: 25px;
+      padding: 22px;
+      border-radius: 15px;
+      border: 1px solid var(--border);
+      background: #f8fafc;
+    }
+
+    .result.visible {
+      display: block;
+    }
+
+    .result-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .result-icon {
+      width: 45px;
+      height: 45px;
+      border-radius: 13px;
+      display: grid;
+      place-items: center;
+      font-size: 23px;
+      background: #e2e8f0;
+    }
+
+    .result.real .result-icon {
+      background: #dcfce7;
+    }
+
+    .result.ai .result-icon {
+      background: #ffedd5;
+    }
+
+    .result h3 {
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    .result-subtitle {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .score-row {
+      margin-top: 16px;
+    }
+
+    .score-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .track {
+      height: 9px;
+      background: #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      width: 0;
+      border-radius: 10px;
+      transition: width 0.5s;
+    }
+
+    .real-fill {
+      background: #22c55e;
+    }
+
+    .ai-fill {
+      background: #f59e0b;
+    }
+
+    .disclaimer {
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--muted);
+      margin-top: 20px;
+      border-top: 1px solid var(--border);
+      padding-top: 15px;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 25px 15px 35px;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding: 15px 5%;
+      }
+
+      .brand {
+        font-size: 18px;
+      }
+
+      .tag {
+        font-size: 10px;
+        padding: 7px 9px;
+      }
+
+      main {
+        margin: 35px auto;
+      }
+
+      .panel {
+        padding: 17px;
+      }
+
+      .dropzone {
+        min-height: 220px;
+      }
+
+      .preview-wrap {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-icon">S</div>
+      SecuriSight
+    </div>
+    <div class="tag">AI IMAGE DETECTOR</div>
+  </header>
+
+  <main>
+    <section class="heading">
+      <div class="eyebrow">IMAGE AUTHENTICITY ANALYSIS</div>
+      <h1>Is Your Image Real or AI?</h1>
+      <p>
+        Upload an image to analyze whether it resembles a real photograph
+        or AI-generated content using our image detection model.
+      </p>
+    </section>
+
+    <section class="panel">
+      <div class="dropzone" id="dropzone" role="button"
+           tabindex="0" aria-label="Choose or drop an image">
+        <div class="upload-icon">↑</div>
+        <h2>Upload your image</h2>
+        <p>Drag and drop an image here, or <span class="browse">browse files</span></p>
+        <p style="margin-top: 10px;">JPG, JPEG, PNG, WEBP · Maximum 10 MB</p>
+      </div>
+
+      <input id="fileInput" type="file"
+             accept="image/jpeg,image/png,image/webp">
+
+      <div class="preview-wrap" id="previewWrap">
+        <img id="preview" alt="Selected image preview">
+        <div class="file-info">
+          <strong id="fileName"></strong>
+          <span id="fileSize"></span>
+        </div>
+        <button class="remove-btn" id="removeBtn" type="button">
+          Remove
+        </button>
+      </div>
+
+      <button class="analyze-btn" id="analyzeBtn" disabled>
+        Analyze Image
+      </button>
+
+      <p class="message" id="message" aria-live="polite">
+        Select an image to get started.
+      </p>
+
+      <section class="result" id="result" aria-live="polite">
+        <div class="result-top">
+          <div class="result-icon" id="resultIcon">✓</div>
+          <div>
+            <h3 id="resultTitle">Analysis complete</h3>
+            <p class="result-subtitle" id="resultSubtitle"></p>
+          </div>
+        </div>
+
+        <div class="score-row">
+          <div class="score-label">
+            <span>Real image score</span>
+            <strong id="realScore">0%</strong>
+          </div>
+          <div class="track">
+            <div class="fill real-fill" id="realFill"></div>
+          </div>
+        </div>
+
+        <div class="score-row">
+          <div class="score-label">
+            <span>AI-generated score</span>
+            <strong id="aiScore">0%</strong>
+          </div>
+          <div class="track">
+            <div class="fill ai-fill" id="aiFill"></div>
+          </div>
+        </div>
+
+        <p class="disclaimer">
+          These scores represent the model's outputs, not a guarantee of
+          authenticity. Detection can be less reliable on unfamiliar
+          generators, edited images, or compressed images.
+        </p>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    SecuriSight · AI Content Verification Platform
+  </footer>
+
+  <script>
+    // Change this to your backend URL when your API is ready.
+    const API_URL = "http://127.0.0.1:8000/predict";
+
+    const fileInput = document.getElementById("fileInput");
+    const dropzone = document.getElementById("dropzone");
+    const previewWrap = document.getElementById("previewWrap");
+    const preview = document.getElementById("preview");
+    const fileName = document.getElementById("fileName");
+    const fileSize = document.getElementById("fileSize");
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const removeBtn = document.getElementById("removeBtn");
+    const message = document.getElementById("message");
+    const result = document.getElementById("result");
+
+    let selectedFile = null;
+    let previewUrl = null;
+
+    function setMessage(text, isError = false) {
+      message.textContent = text;
+      message.classList.toggle("error", isError);
+    }
+
+    function clearResult() {
+      result.className = "result";
+      document.getElementById("realFill").style.width = "0%";
+      document.getElementById("aiFill").style.width = "0%";
+    }
+
+    function selectFile(file) {
+      if (!file) return;
+
+      if (!file.type.startsWith("image/") ||
+          !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+        setMessage("Please select a JPG, PNG, or WEBP image.", true);
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        setMessage("Image size must be 10 MB or less.", true);
+        return;
+      }
+
+      selectedFile = file;
+
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = URL.createObjectURL(file);
+      preview.src = previewUrl;
+
+      fileName.textContent = file.name;
+      fileSize.textContent = (file.size / (1024 * 1024)).toFixed(2) + " MB";
+
+      previewWrap.classList.add("visible");
+      analyzeBtn.disabled = false;
+      clearResult();
+      setMessage("Image ready for analysis.");
+    }
+
+    dropzone.addEventListener("click", () => fileInput.click());
+
+    dropzone.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        fileInput.click();
+      }
+    });
+
+    fileInput.addEventListener("change", event => {
+      selectFile(event.target.files[0]);
+    });
+
+    ["dragenter", "dragover"].forEach(type => {
+      dropzone.addEventListener(type, event => {
+        event.preventDefault();
+        dropzone.classList.add("dragging");
+      });
+    });
+
+    ["dragleave", "drop"].forEach(type => {
+      dropzone.addEventListener(type, event => {
+        event.preventDefault();
+        dropzone.classList.remove("dragging");
+      });
+    });
+
+    dropzone.addEventListener("drop", event => {
+      selectFile(event.dataTransfer.files[0]);
+    });
+
+    removeBtn.addEventListener("click", () => {
+      selectedFile = null;
+      fileInput.value = "";
+      previewWrap.classList.remove("visible");
+      analyzeBtn.disabled = true;
+      clearResult();
+      setMessage("Select an image to get started.");
+
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = null;
+      preview.removeAttribute("src");
+    });
+
+    analyzeBtn.addEventListener("click", async () => {
+      if (!selectedFile) return;
+
+      analyzeBtn.disabled = true;
+      analyzeBtn.textContent = "Analyzing image...";
+      clearResult();
+      setMessage("Sending image to the detection model...");
+
+      try {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+
+        const response = await fetch(API_URL, {
+          method: "POST",
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error("Server returned HTTP " + response.status);
+        }
+
+        const data = await response.json();
+
+        // Expected API response:
+        // {
+        //   "label": "REAL" or "AI_GENERATED",
+        //   "real_probability": 0.95,
+        //   "ai_generated_probability": 0.05
+        // }
+
+        const real = Number(data.real_probability);
+        const ai = Number(data.ai_generated_probability);
+        const label = String(data.label || "").toUpperCase();
+
+        if (!Number.isFinite(real) || !Number.isFinite(ai) ||
+            real < 0 || real > 1 || ai < 0 || ai > 1 ||
+            !["REAL", "AI_GENERATED"].includes(label)) {
+          throw new Error("The API returned an unexpected response.");
+        }
+
+        showResult(label, real, ai);
+
+      } catch (error) {
+        setMessage(
+          "Could not connect to the detection API. Start your backend " +
+          "and check the API URL. " + error.message,
+          true
+        );
+      } finally {
+        analyzeBtn.disabled = !selectedFile;
+        analyzeBtn.textContent = "Analyze Image";
+      }
+    });
+
+    function showResult(label, real, ai) {
+      const isAI = label === "AI_GENERATED";
+
+      result.className = "result visible " + (isAI ? "ai" : "real");
+
+      document.getElementById("resultIcon").textContent =
+        isAI ? "⚠" : "✓";
+
+      document.getElementById("resultTitle").textContent =
+        isAI ? "AI-Generated Image" : "Likely Real Image";
+
+      document.getElementById("resultSubtitle").textContent =
+        "Classification returned by your trained ViT model";
+
+      const realPercent = real * 100;
+      const aiPercent = ai * 100;
+
+      document.getElementById("realScore").textContent =
+        realPercent.toFixed(2) + "%";
+
+      document.getElementById("aiScore").textContent =
+        aiPercent.toFixed(2) + "%";
+
+      document.getElementById("realFill").style.width =
+        realPercent + "%";
+
+      document.getElementById("aiFill").style.width =
+        aiPercent + "%";
+
+      setMessage("Analysis completed successfully.");
+      result.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  </script>
+</body>
+</html>

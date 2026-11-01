@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecuriSight | Original vs Compressed Analysis</title>
+<style>
+:root{--bg:#0e1017;--sidebar:#252630;--panel:#171a23;--panel2:#20232d;--line:#343844;--text:#f4f6fb;--muted:#a0a5b2;--blue:#3895ed;--green:#22c55e;--red:#ff4b55;--amber:#f5a623}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;min-height:100vh}
+.layout{display:grid;grid-template-columns:290px minmax(0,1fr);min-height:100vh}
+aside{background:var(--sidebar);padding:34px 24px;border-right:1px solid #30323c}
+.brand{font-size:25px;font-weight:800;display:flex;align-items:center;gap:12px;margin:70px 0 48px}
+.shield{width:39px;height:39px;border-radius:12px;background:#183d69;display:grid;place-items:center;color:#62b7ff;font-size:22px}
+.side-line{height:1px;background:#41434e;margin-bottom:38px}
+.side-title{font-weight:700;margin-bottom:18px}
+.info{background:#293d59;color:#77b9ff;border-radius:11px;padding:17px;line-height:1.8;font-size:14px}
+.info b{color:#51a5ff}
+main{padding:42px clamp(22px,5vw,75px) 55px;max-width:1500px;width:100%;margin:auto}
+.topline{display:flex;justify-content:space-between;align-items:center;margin-bottom:36px}
+.pill{font-size:12px;color:#7dbdff;background:#152c45;padding:9px 13px;border-radius:30px;font-weight:700;letter-spacing:.6px}
+h1{font-size:clamp(27px,3vw,38px);margin:0 0 10px;letter-spacing:-.7px}
+.subtitle{color:var(--muted);line-height:1.6;margin:0 0 30px}
+.upload-grid,.verdict-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.upload-card,.verdict-card,.summary{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:18px;min-width:0}
+.card-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:15px;font-weight:700}
+.card-heading small{font-weight:400;color:var(--muted)}
+.drop{height:210px;border:2px dashed #454b59;border-radius:10px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;cursor:pointer;padding:15px;background:#141720;transition:.2s}
+.drop:hover,.drop.over{border-color:var(--blue);background:#172333}
+.upload-symbol{width:48px;height:48px;border-radius:13px;background:#1c3652;color:#73baff;display:grid;place-items:center;font-size:25px;margin-bottom:12px}
+.drop strong{font-size:15px;margin-bottom:7px}.drop span{font-size:12px;color:var(--muted);line-height:1.5}
+.drop input{display:none}
+.preview{display:none;width:100%;height:210px;object-fit:contain;background:#0c0e14;border-radius:9px}
+.file-meta{display:none;justify-content:space-between;gap:10px;align-items:center;margin-top:12px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.remove{background:transparent;border:1px solid #555b68;color:#d5d8e0;border-radius:7px;padding:6px 9px;cursor:pointer;flex-shrink:0}
+.action{margin:24px 0 30px;width:100%;height:49px;border:0;border-radius:9px;background:var(--red);color:white;font-size:15px;font-weight:700;cursor:pointer}
+.action:hover{filter:brightness(1.08)}.action:disabled{opacity:.45;cursor:not-allowed}
+.status{text-align:center;color:var(--muted);font-size:13px;min-height:20px;margin:-15px 0 25px}.error{color:#ff858b}
+.section-title{font-size:23px;margin:24px 0 17px}
+.verdict-card h2{font-size:21px;margin:0 0 18px}
+.verdict{padding:14px 15px;border-radius:9px;font-weight:800;font-size:14px;letter-spacing:.2px}
+.verdict.real{background:#143b2a;color:#42df88}.verdict.ai{background:#482328;color:#ff777e}
+.verdict.unknown{background:#2c303b;color:#c3c8d2}
+.metric-label{font-size:13px;color:#dce0e8;margin:19px 0 8px}
+.confidence{font-size:34px;font-weight:500;margin-bottom:18px}
+.bar{height:8px;background:#303642;border-radius:20px;overflow:hidden}.bar>div{height:100%;background:var(--blue);width:0;transition:width .4s}
+.raw{font-size:11px;color:var(--muted);margin-top:13px}
+.prob-row{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:15px}
+.summary{margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.summary div{padding:8px}.summary label{display:block;color:var(--muted);font-size:12px;margin-bottom:8px}.summary strong{font-size:20px}
+.note{color:var(--muted);font-size:12px;line-height:1.6;margin-top:19px}
+footer{text-align:center;color:#747b89;font-size:12px;margin-top:35px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}aside{padding:15px 20px;border-right:0}.brand{margin:0;font-size:21px}.side-line,.side-title,.info{display:none}main{padding-top:28px}}
+@media(max-width:620px){.upload-grid,.verdict-grid{grid-template-columns:1fr}.summary{grid-template-columns:1fr}.topline{margin-bottom:24px}.section-title{font-size:20px}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+  <div class="brand"><div class="shield">⬟</div>SecuriSight</div>
+  <div class="side-line"></div>
+  <div class="side-title">System Architecture</div>
+  <div class="info"><b>Backbone:</b> Vision Transformer (ViT)<br><b>Target:</b> Real vs AI-Generated Images<br><b>Framework:</b> PyTorch<br><b>Mode:</b> Local model inference</div>
+</aside>
+<main>
+  <div class="topline"><span class="pill">IMAGE COMPARISON LAB</span><span class="pill" id="connection">LOCAL API</span></div>
+  <h1>Original vs Compressed Image</h1>
+  <p class="subtitle">Compare the detection results of an original image and its compressed copy using your locally saved SecuriSight model.</p>
+
+  <section class="upload-grid">
+    <div class="upload-card">
+      <div class="card-heading">Original Image <small>01 / SOURCE</small></div>
+      <label class="drop" id="dropOriginal" for="originalInput">
+        <div class="upload-symbol">＋</div><strong>Upload original image</strong><span>Drop image here or click to browse<br>JPG, PNG, WEBP · Max 15 MB</span>
+        <input id="originalInput" type="file" accept="image/jpeg,image/png,image/webp">
+      </label>
+      <img class="preview" id="originalPreview" alt="Original image preview">
+      <div class="file-meta" id="originalMeta"><span id="originalName"></span><button class="remove" data-remove="original">Remove</button></div>
+    </div>
+    <div class="upload-card">
+      <div class="card-heading">Compressed Copy <small>02 / TEST COPY</small></div>
+      <label class="drop" id="dropCompressed" for="compressedInput">
+        <div class="upload-symbol">＋</div><strong>Upload compressed image</strong><span>Drop image here or click to browse<br>JPG, PNG, WEBP · Max 15 MB</span>
+        <input id="compressedInput" type="file" accept="image/jpeg,image/png,image/webp">
+      </label>
+      <img class="preview" id="compressedPreview" alt="Compressed image preview">
+      <div class="file-meta" id="compressedMeta"><span id="compressedName"></span><button class="remove" data-remove="compressed">Remove</button></div>
+    </div>
+  </section>
+
+  <button class="action" id="analyze" disabled>Run Original & Compressed Analysis</button>
+  <div class="status" id="status" aria-live="polite">Select both images to begin comparison.</div>
+
+  <h2 class="section-title">Detection Verdicts</h2>
+  <section class="verdict-grid">
+    <article class="verdict-card">
+      <h2>Original Verdict</h2>
+      <div class="verdict unknown" id="originalVerdict">AWAITING ANALYSIS</div>
+      <div class="metric-label">Confidence</div><div class="confidence" id="originalConfidence">—</div>
+      <div class="bar"><div id="originalBar"></div></div>
+      <div class="prob-row"><span>Real score</span><strong id="originalReal">—</strong></div>
+      <div class="prob-row"><span>AI-generated score</span><strong id="originalAI">—</strong></div>
+    </article>
+    <article class="verdict-card">
+      <h2>Compressed Copy Verdict</h2>
+      <div class="verdict unknown" id="compressedVerdict">AWAITING ANALYSIS</div>
+      <div class="metric-label">Confidence</div><div class="confidence" id="compressedConfidence">—</div>
+      <div class="bar"><div id="compressedBar"></div></div>
+      <div class="prob-row"><span>Real score</span><strong id="compressedReal">—</strong></div>
+      <div class="prob-row"><span>AI-generated score</span><strong id="compressedAI">—</strong></div>
+    </article>
+  </section>
+
+  <h2 class="section-title">Compression Summary</h2>
+  <section class="summary">
+    <div><label>Original file size</label><strong id="originalSize">—</strong></div>
+    <div><label>Compressed file size</label><strong id="compressedSize">—</strong></div>
+    <div><label>File size reduction</label><strong id="reduction">—</strong></div>
+  </section>
+  <p class="note">Model confidence is the model's softmax score, not a guarantee of authenticity. Compression percentage is calculated from uploaded file sizes. A compressed image may receive a different classification; this comparison reports the model's actual outputs.</p>
+  <footer>SecuriSight · Local AI Image Verification · No images are sent to an online model service</footer>
+</main>
+</div>
+<script>
+const files = {original:null, compressed:null};
+const objectUrls = {original:null, compressed:null};
+const $ = id => document.getElementById(id);
+
+function setStatus(message, error=false) {
+  $("status").textContent = message;
+  $("status").classList.toggle("error", error);
+}
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + " KB";
+  return (bytes/(1024*1024)).toFixed(2) + " MB";
+}
+function updateButton() { $("analyze").disabled = !(files.original && files.compressed); }
+
+function setFile(which, file) {
+  if (!file) return;
+  if (!["image/jpeg","image/png","image/webp"].includes(file.type)) {
+    setStatus("Please select JPG, PNG, or WEBP images only.", true); return;
+  }
+  if (file.size > 15*1024*1024) {
+    setStatus("Each image must be 15 MB or smaller.", true); return;
+  }
+  files[which] = file;
+  if (objectUrls[which]) URL.revokeObjectURL(objectUrls[which]);
+  objectUrls[which] = URL.createObjectURL(file);
+  const cap = which[0].toUpperCase()+which.slice(1);
+  $("drop"+cap).style.display = "none";
+  $(which+"Preview").src = objectUrls[which];
+  $(which+"Preview").style.display = "block";
+  $(which+"Meta").style.display = "flex";
+  $(which+"Name").textContent = file.name + " · " + formatBytes(file.size);
+  updateButton();
+  resetResults();
+  setStatus(files.original && files.compressed ? "Both images are ready. Run the comparison." : "Upload the other image to continue.");
+}
+function resetOne(which) {
+  files[which] = null;
+  if (objectUrls[which]) URL.revokeObjectURL(objectUrls[which]);
+  objectUrls[which] = null;
+  const cap = which[0].toUpperCase()+which.slice(1);
+  $(which+"Preview").removeAttribute("src");
+  $(which+"Preview").style.display = "none";
+  $(which+"Meta").style.display = "none";
+  $("drop"+cap).style.display = "flex";
+  $(which+"Input").value = "";
+  updateButton(); resetResults();
+  setStatus("Image removed. Select both images to compare.");
+}
+function resetResults() {
+  ["original","compressed"].forEach(which => {
+    $(which+"Verdict").textContent = "AWAITING ANALYSIS";
+    $(which+"Verdict").className = "verdict unknown";
+    $(which+"Confidence").textContent = "—";
+    $(which+"Bar").style.width = "0%";
+    $(which+"Real").textContent = "—";
+    $(which+"AI").textContent = "—";
+  });
+  $("originalSize").textContent = "—";
+  $("compressedSize").textContent = "—";
+  $("reduction").textContent = "—";
+}
+["original","compressed"].forEach(which => {
+  $(which+"Input").addEventListener("change", e => setFile(which,e.target.files[0]));
+  const drop = $("drop"+which[0].toUpperCase()+which.slice(1));
+  ["dragenter","dragover"].forEach(type => drop.addEventListener(type,e => {e.preventDefault();drop.classList.add("over");}));
+  ["dragleave","drop"].forEach(type => drop.addEventListener(type,e => {e.preventDefault();drop.classList.remove("over");}));
+  drop.addEventListener("drop",e => setFile(which,e.dataTransfer.files[0]));
+});
+document.querySelectorAll("[data-remove]").forEach(btn => btn.addEventListener("click",()=>resetOne(btn.dataset.remove)));
+
+function showVerdict(which, data) {
+  const ai = data.label === "AI_GENERATED";
+  const card = $(which+"Verdict");
+  card.textContent = ai ? "AI-GENERATED / FAKE" : "AUTHENTIC (REAL)";
+  card.className = "verdict " + (ai ? "ai" : "real");
+  $(which+"Confidence").textContent = (data.confidence*100).toFixed(2)+"%";
+  $(which+"Bar").style.width = (data.confidence*100)+"%";
+  $(which+"Real").textContent = (data.real_probability*100).toFixed(2)+"%";
+  $(which+"AI").textContent = (data.ai_generated_probability*100).toFixed(2)+"%";
+}
+$("analyze").addEventListener("click", async () => {
+  if (!files.original || !files.compressed) return;
+  const btn = $("analyze");
+  btn.disabled = true; btn.textContent = "Analyzing both images...";
+  setStatus("Running both images through your local ViT model...");
+  try {
+    const form = new FormData();
+    form.append("original", files.original);
+    form.append("compressed", files.compressed);
+    const response = await fetch("/api/compare", {method:"POST", body:form});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || "API request failed");
+    showVerdict("original",data.original);
+    showVerdict("compressed",data.compressed);
+    $("originalSize").textContent = formatBytes(data.files.original_size_bytes);
+    $("compressedSize").textContent = formatBytes(data.files.compressed_size_bytes);
+    $("reduction").textContent = data.files.size_reduction_percent.toFixed(2)+"%";
+    $("connection").textContent = "CONNECTED · "+data.device.toUpperCase();
+    setStatus("Comparison completed successfully using the local model.");
+  } catch(err) {
+    setStatus("Analysis failed: "+err.message, true);
+  } finally {
+    btn.disabled = !(files.original && files.compressed);
+    btn.textContent = "Run Original & Compressed Analysis";
+  }
+});
+fetch("/api/health").then(r=>r.json()).then(data=>{
+  $("connection").textContent = data.model_loaded ? "MODEL LOADED · "+data.device.toUpperCase() : "LOCAL API READY";
+}).catch(()=>{$("connection").textContent="API STATUS UNKNOWN";});
+</script>
+</body>
+</html>
