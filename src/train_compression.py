@@ -1,298 +1,100 @@
-
 from pathlib import Path
 from PIL import Image
+import argparse, json, random, time
+import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
-from transformers import (
-    AutoImageProcessor,
-    AutoModelForImageClassification,
-)
-from sklearn.metrics import accuracy_score, classification_report
-from tqdm import tqdm
-import argparse
-import json
+from transformers import AutoImageProcessor, AutoModelForImageClassification, get_linear_schedule_with_warmup
+from sklearn.metrics import accuracy_score, f1_score
+from tqdm.auto import tqdm
 
+LABEL2ID = {"ai_generated": 0, "real": 1}
+ID2LABEL = {0: "AI_GENERATED", 1: "REAL"}
+EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff"}
 
-CHECKPOINT = "google/vit-base-patch16-224-in21k"
+def seed_all(seed):
+    random.seed(seed); np.random.seed(seed); torch.manual_seed(seed)
+    if torch.cuda.is_available(): torch.cuda.manual_seed_all(seed)
 
-LABEL2ID = {
-    "ai_generated": 0,
-    "real": 1,
-}
+class FolderImages(Dataset):
+    def __init__(self, root, split, processor):
+        self.items, self.processor = [], processor
+        for label, idx in LABEL2ID.items():
+            folder = Path(root) / split / label
+            if not folder.is_dir(): raise FileNotFoundError(folder)
+            self.items += [(p, idx) for p in sorted(folder.iterdir()) if p.is_file() and p.suffix.lower() in EXTS]
+        if not self.items: raise RuntimeError(f"No images found in {root}/{split}")
+    def __len__(self): return len(self.items)
+    def __getitem__(self, i):
+        path, label = self.items[i]
+        with Image.open(path) as im:
+            x = self.processor(images=im.convert("RGB"), return_tensors="pt")["pixel_values"][0]
+        return x, torch.tensor(label, dtype=torch.long)
 
-ID2LABEL = {
-    0: "AI_GENERATED",
-    1: "REAL",
-}
+def collate(batch):
+    x, y = zip(*batch)
+    return torch.stack(x), torch.stack(y)
 
-
-def get_device():
-    if torch.cuda.is_available():
-        return torch.device("cuda")
-
-    try:
-        import torch_directml
-        return torch_directml.device()
-    except ImportError:
-        return torch.device("cpu")
-
-
-class ImageDataset(Dataset):
-    def __init__(self, root, processor):
-        self.processor = processor
-        self.samples = []
-
-        for class_name, label in LABEL2ID.items():
-            folder = Path(root) / class_name
-
-            for path in folder.iterdir():
-                if path.is_file():
-                    self.samples.append((path, label))
-
-        if not self.samples:
-            raise RuntimeError(f"No images found in {root}")
-
-    def __len__(self):
-        return len(self.samples)
-
-    def __getitem__(self, index):
-        path, label = self.samples[index]
-
-        try:
-            with Image.open(path) as image:
-                image = image.convert("RGB")
-                inputs = self.processor(
-                    images=image,
-                    return_tensors="pt"
-                )
-
-            pixel_values = inputs["pixel_values"].squeeze(0)
-
-            return pixel_values, label
-
-        except Exception as error:
-            raise RuntimeError(f"Cannot read image {path}: {error}")
-
-
-def run_epoch(model, loader, optimizer, device, training):
-    model.train(training)
-
-    total_loss = 0.0
-    predictions = []
-    targets = []
-
-    progress = tqdm(loader, leave=False)
-
-    for pixel_values, labels in progress:
-        pixel_values = pixel_values.to(device)
-        labels = labels.to(device)
-
-        if training:
-            optimizer.zero_grad()
-
+def epoch(model, loader, device, optimizer=None, scaler=None, scheduler=None):
+    training = optimizer is not None
+    model.train(training); losses=[]; pred_all=[]; true_all=[]
+    for pixels, labels in tqdm(loader, leave=False):
+        pixels, labels = pixels.to(device), labels.to(device)
+        if training: optimizer.zero_grad(set_to_none=True)
         with torch.set_grad_enabled(training):
-            outputs = model(
-                pixel_values=pixel_values,
-                labels=labels
-            )
-
-            loss = outputs.loss
-
+            with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=device.type=="cuda"):
+                out = model(pixel_values=pixels, labels=labels)
             if training:
-                loss.backward()
-                optimizer.step()
-
-        total_loss += loss.item()
-
-        predicted = outputs.logits.argmax(dim=1)
-
-        predictions.extend(predicted.detach().cpu().tolist())
-        targets.extend(labels.detach().cpu().tolist())
-
-        progress.set_postfix(loss=f"{loss.item():.4f}")
-
-    average_loss = total_loss / max(len(loader), 1)
-    accuracy = accuracy_score(targets, predictions)
-
-    return average_loss, accuracy, targets, predictions
-
+                if scaler.is_enabled():
+                    scaler.scale(out.loss).backward(); scaler.step(optimizer); scaler.update()
+                else:
+                    out.loss.backward(); optimizer.step()
+                if scheduler: scheduler.step()
+        losses.append(out.loss.detach().item())
+        pred_all.extend(out.logits.argmax(1).detach().cpu().tolist())
+        true_all.extend(labels.detach().cpu().tolist())
+    return {"loss": float(np.mean(losses)), "accuracy": float(accuracy_score(true_all, pred_all)),
+            "macro_f1": float(f1_score(true_all, pred_all, average="macro", zero_division=0))}
 
 def main():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "--data",
-        default="data/compression_dataset"
-    )
-
-    parser.add_argument(
-        "--output",
-        default="outputs/vit-compression-robust"
-    )
-
-    parser.add_argument("--epochs", type=int, default=5)
-    parser.add_argument("--batch-size", type=int, default=8)
-    parser.add_argument("--learning-rate", type=float, default=2e-5)
-    parser.add_argument("--patience", type=int, default=3)
-
-    args = parser.parse_args()
-
-    data_root = Path(args.data)
-    output_dir = Path(args.output)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    device = get_device()
-
-    print(f"Using device: {device}")
-
-    processor = AutoImageProcessor.from_pretrained(CHECKPOINT)
-
-    train_dataset = ImageDataset(
-        data_root / "train",
-        processor
-    )
-
-    val_dataset = ImageDataset(
-        data_root / "val",
-        processor
-    )
-
-    test_dataset = ImageDataset(
-        data_root / "test",
-        processor
-    )
-
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=args.batch_size,
-        shuffle=True,
-        num_workers=0
-    )
-
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=args.batch_size,
-        shuffle=False,
-        num_workers=0
-    )
-
-    test_loader = DataLoader(
-        test_dataset,
-        batch_size=args.batch_size,
-        shuffle=False,
-        num_workers=0
-    )
-
-    model = AutoModelForImageClassification.from_pretrained(
-        CHECKPOINT,
-        num_labels=2,
-        id2label=ID2LABEL,
-        label2id={
-            "AI_GENERATED": 0,
-            "REAL": 1,
-        },
-        ignore_mismatched_sizes=True,
-    )
-
-    model.to(device)
-
-    optimizer = torch.optim.AdamW(
-        model.parameters(),
-        lr=args.learning_rate
-    )
-
-    best_val_accuracy = -1
-    patience_counter = 0
-
-    history = []
-
-    for epoch in range(args.epochs):
-        print(f"\nEpoch {epoch + 1}/{args.epochs}")
-
-        train_loss, train_acc, _, _ = run_epoch(
-            model,
-            train_loader,
-            optimizer,
-            device,
-            training=True
-        )
-
-        val_loss, val_acc, _, _ = run_epoch(
-            model,
-            val_loader,
-            optimizer,
-            device,
-            training=False
-        )
-
-        print(f"Train loss: {train_loss:.4f}")
-        print(f"Train accuracy: {train_acc:.4f}")
-        print(f"Validation loss: {val_loss:.4f}")
-        print(f"Validation accuracy: {val_acc:.4f}")
-
-        history.append({
-            "epoch": epoch + 1,
-            "train_loss": train_loss,
-            "train_accuracy": train_acc,
-            "validation_loss": val_loss,
-            "validation_accuracy": val_acc,
-        })
-
-        if val_acc > best_val_accuracy:
-            best_val_accuracy = val_acc
-            patience_counter = 0
-
-            model.save_pretrained(output_dir)
-            processor.save_pretrained(output_dir)
-
-            print("Best model saved.")
-
+    ap=argparse.ArgumentParser()
+    ap.add_argument("--data", required=True); ap.add_argument("--output", required=True)
+    ap.add_argument("--epochs", type=int, default=5); ap.add_argument("--batch-size", type=int, default=8)
+    ap.add_argument("--lr", type=float, default=2e-5); ap.add_argument("--workers", type=int, default=2)
+    ap.add_argument("--patience", type=int, default=3); ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--checkpoint", default="google/vit-base-patch16-224-in21k")
+    a=ap.parse_args(); seed_all(a.seed)
+    device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("Device:", device, torch.cuda.get_device_name(0) if device.type=="cuda" else "")
+    outdir=Path(a.output); outdir.mkdir(parents=True, exist_ok=True)
+    processor=AutoImageProcessor.from_pretrained(a.checkpoint)
+    model=AutoModelForImageClassification.from_pretrained(
+        a.checkpoint, num_labels=2, id2label=ID2LABEL, label2id=LABEL2ID,
+        ignore_mismatched_sizes=True).to(device)
+    train_ds=FolderImages(a.data, "train", processor); val_ds=FolderImages(a.data, "val", processor)
+    train_dl=DataLoader(train_ds, batch_size=a.batch_size, shuffle=True, num_workers=a.workers,
+                        pin_memory=device.type=="cuda", collate_fn=collate)
+    val_dl=DataLoader(val_ds, batch_size=a.batch_size, shuffle=False, num_workers=a.workers,
+                      pin_memory=device.type=="cuda", collate_fn=collate)
+    opt=torch.optim.AdamW(model.parameters(), lr=a.lr, weight_decay=.01)
+    steps=len(train_dl)*a.epochs
+    sched=get_linear_schedule_with_warmup(opt, int(.05*steps), steps)
+    scaler=torch.amp.GradScaler("cuda", enabled=device.type=="cuda")
+    best=-1; stale=0; history=[]
+    for ep in range(1, a.epochs+1):
+        t=time.time()
+        tr=epoch(model, train_dl, device, opt, scaler, sched)
+        va=epoch(model, val_dl, device)
+        rec={"epoch":ep, "train":tr, "validation":va, "seconds":round(time.time()-t,1)}
+        history.append(rec); print(json.dumps(rec, indent=2))
+        if va["macro_f1"] > best:
+            best=va["macro_f1"]; stale=0
+            model.save_pretrained(outdir); processor.save_pretrained(outdir)
+            print(f"Saved best checkpoint; validation macro-F1={best:.4f}")
         else:
-            patience_counter += 1
+            stale+=1
+            if stale>=a.patience: print("Early stopping."); break
+    (outdir/"training_history.json").write_text(json.dumps(history, indent=2))
+    print("Best model saved to", outdir)
 
-        if patience_counter >= args.patience:
-            print("Early stopping triggered.")
-            break
-
-    # Reload the best validation checkpoint before testing.
-    model = AutoModelForImageClassification.from_pretrained(
-        output_dir
-    ).to(device)
-
-    test_loss, test_acc, targets, predictions = run_epoch(
-        model,
-        test_loader,
-        optimizer,
-        device,
-        training=False
-    )
-
-    print("\nFinal test results")
-    print(f"Test loss: {test_loss:.4f}")
-    print(f"Test accuracy: {test_acc:.4f}")
-
-    print(
-        classification_report(
-            targets,
-            predictions,
-            labels=[0, 1],
-            target_names=["AI_GENERATED", "REAL"],
-            zero_division=0
-        )
-    )
-
-    with open(output_dir / "training_history.json", "w") as file:
-        json.dump(history, file, indent=4)
-
-    with open(output_dir / "test_results.json", "w") as file:
-        json.dump({
-            "test_loss": test_loss,
-            "test_accuracy": test_acc,
-            "best_validation_accuracy": best_val_accuracy,
-        }, file, indent=4)
-
-    print(f"\nModel saved at: {output_dir}")
-
-
-if __name__ == "__main__":
-    main()
+if __name__=="__main__": main()
