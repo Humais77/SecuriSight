@@ -3,54 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SecuriSight | Original vs Compressed Analysis</title>
+<title>SecuriSight | Image Verification</title>
 <style>
-:root{--bg:#0e1017;--sidebar:#252630;--panel:#171a23;--panel2:#20232d;--line:#343844;--text:#f4f6fb;--muted:#a0a5b2;--blue:#3895ed;--green:#22c55e;--red:#ff4b55;--amber:#f5a623}
+:root{--bg:#0e1017;--sidebar:#20232d;--panel:#171a23;--panel2:#202530;--line:#343b49;--text:#f4f6fb;--muted:#a0a8b7;--blue:#3895ed;--green:#22c55e;--red:#ff626b;--amber:#f5b544}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;min-height:100vh}
-.layout{display:grid;grid-template-columns:290px minmax(0,1fr);min-height:100vh}
-aside{background:var(--sidebar);padding:34px 24px;border-right:1px solid #30323c}
-.brand{font-size:25px;font-weight:800;display:flex;align-items:center;gap:12px;margin:70px 0 48px}
-.shield{width:39px;height:39px;border-radius:12px;background:#183d69;display:grid;place-items:center;color:#62b7ff;font-size:22px}
-.side-line{height:1px;background:#41434e;margin-bottom:38px}
-.side-title{font-weight:700;margin-bottom:18px}
-.info{background:#293d59;color:#77b9ff;border-radius:11px;padding:17px;line-height:1.8;font-size:14px}
-.info b{color:#51a5ff}
-main{padding:42px clamp(22px,5vw,75px) 55px;max-width:1500px;width:100%;margin:auto}
-.topline{display:flex;justify-content:space-between;align-items:center;margin-bottom:36px}
-.pill{font-size:12px;color:#7dbdff;background:#152c45;padding:9px 13px;border-radius:30px;font-weight:700;letter-spacing:.6px}
-h1{font-size:clamp(27px,3vw,38px);margin:0 0 10px;letter-spacing:-.7px}
-.subtitle{color:var(--muted);line-height:1.6;margin:0 0 30px}
-.upload-grid,.verdict-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-.upload-card,.verdict-card,.summary{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:18px;min-width:0}
-.card-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:15px;font-weight:700}
-.card-heading small{font-weight:400;color:var(--muted)}
-.drop{height:210px;border:2px dashed #454b59;border-radius:10px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;cursor:pointer;padding:15px;background:#141720;transition:.2s}
-.drop:hover,.drop.over{border-color:var(--blue);background:#172333}
+.layout{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100vh}
+aside{background:var(--sidebar);padding:30px 22px;border-right:1px solid #303744}
+.brand{font-size:24px;font-weight:800;display:flex;align-items:center;gap:11px;margin:35px 0 42px}
+.shield{width:38px;height:38px;border-radius:12px;background:#183d69;display:grid;place-items:center;color:#62b7ff;font-size:21px}
+.side-line{height:1px;background:#414957;margin-bottom:28px}
+.info{background:#293d59;color:#b6d9ff;border-radius:11px;padding:15px;line-height:1.9;font-size:13px}
+.info b{color:#70b8ff}
+main{padding:38px clamp(18px,4vw,62px) 55px;max-width:1500px;width:100%;margin:auto}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:28px}
+.pill{font-size:11px;color:#8dc7ff;background:#152c45;padding:9px 12px;border-radius:30px;font-weight:700;letter-spacing:.6px}
+h1{font-size:clamp(27px,3vw,38px);margin:0 0 9px;letter-spacing:-.7px}
+.subtitle{color:var(--muted);line-height:1.6;margin:0 0 25px}
+.tabs{display:flex;gap:10px;flex-wrap:wrap;margin:25px 0}
+.tab{border:1px solid var(--line);background:var(--panel);color:#cbd2df;padding:12px 17px;border-radius:9px;cursor:pointer;font-weight:700}
+.tab.active{background:#173b5e;border-color:#347fbd;color:#fff}
+.panel{display:none}.panel.active{display:block}
+.upload-card,.result-card,.variant-card,.summary{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:18px;min-width:0}
+.upload-card{max-width:720px}
+.drop{min-height:210px;border:2px dashed #454d5d;border-radius:10px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;cursor:pointer;padding:18px;background:#141720}
+.drop:hover{border-color:var(--blue);background:#172333}
 .upload-symbol{width:48px;height:48px;border-radius:13px;background:#1c3652;color:#73baff;display:grid;place-items:center;font-size:25px;margin-bottom:12px}
-.drop strong{font-size:15px;margin-bottom:7px}.drop span{font-size:12px;color:var(--muted);line-height:1.5}
+.drop strong{font-size:15px;margin-bottom:7px}.drop span{font-size:12px;color:var(--muted);line-height:1.6}
 .drop input{display:none}
-.preview{display:none;width:100%;height:210px;object-fit:contain;background:#0c0e14;border-radius:9px}
-.file-meta{display:none;justify-content:space-between;gap:10px;align-items:center;margin-top:12px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-.remove{background:transparent;border:1px solid #555b68;color:#d5d8e0;border-radius:7px;padding:6px 9px;cursor:pointer;flex-shrink:0}
-.action{margin:24px 0 30px;width:100%;height:49px;border:0;border-radius:9px;background:var(--red);color:white;font-size:15px;font-weight:700;cursor:pointer}
-.action:hover{filter:brightness(1.08)}.action:disabled{opacity:.45;cursor:not-allowed}
-.status{text-align:center;color:var(--muted);font-size:13px;min-height:20px;margin:-15px 0 25px}.error{color:#ff858b}
-.section-title{font-size:23px;margin:24px 0 17px}
-.verdict-card h2{font-size:21px;margin:0 0 18px}
-.verdict{padding:14px 15px;border-radius:9px;font-weight:800;font-size:14px;letter-spacing:.2px}
-.verdict.real{background:#143b2a;color:#42df88}.verdict.ai{background:#482328;color:#ff777e}
-.verdict.unknown{background:#2c303b;color:#c3c8d2}
-.metric-label{font-size:13px;color:#dce0e8;margin:19px 0 8px}
-.confidence{font-size:34px;font-weight:500;margin-bottom:18px}
-.bar{height:8px;background:#303642;border-radius:20px;overflow:hidden}.bar>div{height:100%;background:var(--blue);width:0;transition:width .4s}
-.raw{font-size:11px;color:var(--muted);margin-top:13px}
-.prob-row{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:15px}
-.summary{margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.summary div{padding:8px}.summary label{display:block;color:var(--muted);font-size:12px;margin-bottom:8px}.summary strong{font-size:20px}
-.note{color:var(--muted);font-size:12px;line-height:1.6;margin-top:19px}
+.fileline{display:flex;justify-content:space-between;gap:10px;align-items:center;color:var(--muted);font-size:12px;margin-top:12px;overflow-wrap:anywhere}
+.action{margin:17px 0 10px;width:100%;height:48px;border:0;border-radius:9px;background:var(--red);color:white;font-size:14px;font-weight:700;cursor:pointer}
+.action:disabled{opacity:.45;cursor:not-allowed}
+.status{color:var(--muted);font-size:13px;min-height:22px;margin:8px 0 18px}.error{color:#ff858b}
+.result-card{max-width:720px;margin-top:18px;display:none}
+.verdict{padding:13px 14px;border-radius:9px;font-weight:800;font-size:14px;margin:12px 0}
+.verdict.real{background:#143b2a;color:#42df88}.verdict.ai{background:#482328;color:#ff858b}
+.metric{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:13px;margin:12px 0}
+.meter{height:8px;background:#303642;border-radius:20px;overflow:hidden}.meter>div{height:100%;background:var(--blue);width:0}
+.section-title{font-size:21px;margin:30px 0 14px}
+.table-wrap{overflow-x:auto;margin-top:16px}
+table{width:100%;border-collapse:collapse;min-width:650px;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line);font-size:12px}
+th{color:#aebbd0;background:#202530}td{color:#e4e8ef}
+.tag{display:inline-block;padding:5px 8px;border-radius:6px;font-size:11px;font-weight:800}
+.tag.real{background:#143b2a;color:#42df88}.tag.ai{background:#482328;color:#ff858b}
+.variants{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.variant-card img{width:100%;height:180px;object-fit:contain;background:#0c0e14;border-radius:8px}
+.variant-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:12px 0;font-weight:800}
+.variant-card .small{font-size:11px;color:var(--muted);margin:7px 0}
+.model-result{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+.model-result strong{font-size:12px}.model-result .verdict{margin:8px 0;padding:8px 10px;font-size:11px}
+.note{color:var(--muted);font-size:12px;line-height:1.6;margin-top:18px}
 footer{text-align:center;color:#747b89;font-size:12px;margin-top:35px}
-@media(max-width:900px){.layout{grid-template-columns:1fr}aside{padding:15px 20px;border-right:0}.brand{margin:0;font-size:21px}.side-line,.side-title,.info{display:none}main{padding-top:28px}}
-@media(max-width:620px){.upload-grid,.verdict-grid{grid-template-columns:1fr}.summary{grid-template-columns:1fr}.topline{margin-bottom:24px}.section-title{font-size:20px}}
+@media(max-width:950px){.layout{grid-template-columns:1fr}aside{padding:14px 20px}.brand{margin:0;font-size:21px}.side-line,.info{display:none}main{padding-top:25px}}
+@media(max-width:700px){.variants{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.variants{grid-template-columns:1fr}.variant-card img{height:220px}.topline{align-items:flex-start;flex-direction:column}}
 </style>
 </head>
 <body>
@@ -58,178 +64,180 @@ footer{text-align:center;color:#747b89;font-size:12px;margin-top:35px}
 <aside>
   <div class="brand"><div class="shield">⬟</div>SecuriSight</div>
   <div class="side-line"></div>
-  <div class="side-title">System Architecture</div>
-  <div class="info"><b>Backbone:</b> Vision Transformer (ViT)<br><b>Target:</b> Real vs AI-Generated Images<br><b>Framework:</b> PyTorch<br><b>Mode:</b> Local model inference</div>
+  <div class="info">
+    <b>Backbone:</b> Vision Transformer (ViT)<br>
+    <b>Main model:</b> Original image detection<br>
+    <b>Second model:</b> Compression-aware ViT<br>
+    <b>Framework:</b> PyTorch<br>
+    <b>Mode:</b> Local model inference
+  </div>
 </aside>
 <main>
-  <div class="topline"><span class="pill">IMAGE COMPARISON LAB</span><span class="pill" id="connection">LOCAL API</span></div>
-  <h1>Original vs Compressed Image</h1>
-  <p class="subtitle">Compare the detection results of an original image and its compressed copy using your locally saved SecuriSight model.</p>
+  <div class="topline"><span class="pill">IMAGE VERIFICATION LAB</span><span class="pill" id="connection">CHECKING MODELS...</span></div>
+  <h1>SecuriSight Image Analysis</h1>
+  <p class="subtitle">Choose standard image detection or test how both models respond to JPEG compression.</p>
 
-  <section class="upload-grid">
+  <nav class="tabs">
+    <button class="tab active" data-tab="single">Image Detection</button>
+    <button class="tab" data-tab="compression">Compression Analysis</button>
+  </nav>
+
+  <section class="panel active" id="single">
+    <h2 class="section-title">Check whether an image is real or AI-generated</h2>
     <div class="upload-card">
-      <div class="card-heading">Original Image <small>01 / SOURCE</small></div>
-      <label class="drop" id="dropOriginal" for="originalInput">
-        <div class="upload-symbol">＋</div><strong>Upload original image</strong><span>Drop image here or click to browse<br>JPG, PNG, WEBP · Max 15 MB</span>
-        <input id="originalInput" type="file" accept="image/jpeg,image/png,image/webp">
+      <label class="drop" for="singleInput">
+        <div class="upload-symbol">＋</div><strong>Upload an image</strong>
+        <span>Click to browse or drop an image here<br>JPG, PNG, WEBP · Maximum 15 MB</span>
+        <input id="singleInput" type="file" accept="image/jpeg,image/png,image/webp">
       </label>
-      <img class="preview" id="originalPreview" alt="Original image preview">
-      <div class="file-meta" id="originalMeta"><span id="originalName"></span><button class="remove" data-remove="original">Remove</button></div>
+      <div class="fileline"><span id="singleFileName">No image selected</span><button class="tab" id="singleClear" type="button">Remove</button></div>
+      <button class="action" id="singleRun" disabled>Analyze with Main ViT</button>
+      <div class="status" id="singleStatus" aria-live="polite">Select an image to begin.</div>
     </div>
-    <div class="upload-card">
-      <div class="card-heading">Compressed Copy <small>02 / TEST COPY</small></div>
-      <label class="drop" id="dropCompressed" for="compressedInput">
-        <div class="upload-symbol">＋</div><strong>Upload compressed image</strong><span>Drop image here or click to browse<br>JPG, PNG, WEBP · Max 15 MB</span>
-        <input id="compressedInput" type="file" accept="image/jpeg,image/png,image/webp">
-      </label>
-      <img class="preview" id="compressedPreview" alt="Compressed image preview">
-      <div class="file-meta" id="compressedMeta"><span id="compressedName"></span><button class="remove" data-remove="compressed">Remove</button></div>
-    </div>
-  </section>
-
-  <button class="action" id="analyze" disabled>Run Original & Compressed Analysis</button>
-  <div class="status" id="status" aria-live="polite">Select both images to begin comparison.</div>
-
-  <h2 class="section-title">Detection Verdicts</h2>
-  <section class="verdict-grid">
-    <article class="verdict-card">
-      <h2>Original Verdict</h2>
-      <div class="verdict unknown" id="originalVerdict">AWAITING ANALYSIS</div>
-      <div class="metric-label">Confidence</div><div class="confidence" id="originalConfidence">—</div>
-      <div class="bar"><div id="originalBar"></div></div>
-      <div class="prob-row"><span>Real score</span><strong id="originalReal">—</strong></div>
-      <div class="prob-row"><span>AI-generated score</span><strong id="originalAI">—</strong></div>
-    </article>
-    <article class="verdict-card">
-      <h2>Compressed Copy Verdict</h2>
-      <div class="verdict unknown" id="compressedVerdict">AWAITING ANALYSIS</div>
-      <div class="metric-label">Confidence</div><div class="confidence" id="compressedConfidence">—</div>
-      <div class="bar"><div id="compressedBar"></div></div>
-      <div class="prob-row"><span>Real score</span><strong id="compressedReal">—</strong></div>
-      <div class="prob-row"><span>AI-generated score</span><strong id="compressedAI">—</strong></div>
+    <article class="result-card" id="singleResult">
+      <h2>Main ViT Result</h2>
+      <img id="singlePreview" alt="Uploaded image preview" style="max-width:100%;max-height:300px;object-fit:contain;border-radius:9px">
+      <div class="verdict" id="singleVerdict"></div>
+      <div class="metric"><span>Confidence</span><strong id="singleConfidence"></strong></div>
+      <div class="meter"><div id="singleMeter"></div></div>
+      <div class="metric"><span>REAL probability</span><strong id="singleReal"></strong></div>
+      <div class="metric"><span>AI-generated probability</span><strong id="singleAI"></strong></div>
     </article>
   </section>
 
-  <h2 class="section-title">Compression Summary</h2>
-  <section class="summary">
-    <div><label>Original file size</label><strong id="originalSize">—</strong></div>
-    <div><label>Compressed file size</label><strong id="compressedSize">—</strong></div>
-    <div><label>File size reduction</label><strong id="reduction">—</strong></div>
+  <section class="panel" id="compression">
+    <h2 class="section-title">Compression robustness test</h2>
+    <p class="subtitle">Upload one image. SecuriSight automatically creates the original plus five JPEG quality versions and runs both models on every version.</p>
+    <div class="upload-card">
+      <label class="drop" for="compressionInput">
+        <div class="upload-symbol">＋</div><strong>Upload one image for compression testing</strong>
+        <span>JPG, PNG, WEBP · Maximum 15 MB<br>Versions: Original, Q20, Q40, Q60, Q80, Q100</span>
+        <input id="compressionInput" type="file" accept="image/jpeg,image/png,image/webp">
+      </label>
+      <div class="fileline"><span id="compressionFileName">No image selected</span><button class="tab" id="compressionClear" type="button">Remove</button></div>
+      <button class="action" id="compressionRun" disabled>Generate Versions & Analyze</button>
+      <div class="status" id="compressionStatus" aria-live="polite">Select one image to begin.</div>
+    </div>
+    <div id="compressionResults" style="display:none">
+      <h2 class="section-title">Original and compressed versions</h2>
+      <div class="variants" id="variantGrid"></div>
+      <h2 class="section-title">Prediction comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Version</th><th>File size</th><th>Size reduction</th><th>Main ViT</th><th>Compression-aware ViT</th></tr></thead>
+          <tbody id="comparisonRows"></tbody>
+        </table>
+      </div>
+      <p class="note" id="compressionNote"></p>
+    </div>
   </section>
-  <p class="note">Model confidence is the model's softmax score, not a guarantee of authenticity. Compression percentage is calculated from uploaded file sizes. A compressed image may receive a different classification; this comparison reports the model's actual outputs.</p>
-  <footer>SecuriSight · Local AI Image Verification · No images are sent to an online model service</footer>
+  <p class="note">Confidence is the model's softmax score, not a guarantee of authenticity. JPEG Q100 is still a re-encoded JPEG. Compression testing measures model behaviour; it does not establish whether an image is genuinely authentic.</p>
+  <footer>SecuriSight · Local AI Image Verification · Images are processed by your local API</footer>
 </main>
 </div>
 <script>
-const files = {original:null, compressed:null};
-const objectUrls = {original:null, compressed:null};
 const $ = id => document.getElementById(id);
+let singleFile = null, compressionFile = null;
 
-function setStatus(message, error=false) {
-  $("status").textContent = message;
-  $("status").classList.toggle("error", error);
+function setStatus(id, message, error=false) {
+  $(id).textContent = message;
+  $(id).classList.toggle("error", error);
 }
-function formatBytes(bytes) {
-  if (bytes < 1024) return bytes + " B";
-  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + " KB";
-  return (bytes/(1024*1024)).toFixed(2) + " MB";
+function bytes(value) {
+  if (value < 1024) return value + " B";
+  if (value < 1024*1024) return (value/1024).toFixed(1) + " KB";
+  return (value/(1024*1024)).toFixed(2) + " MB";
 }
-function updateButton() { $("analyze").disabled = !(files.original && files.compressed); }
+function validFile(file) {
+  return file && ["image/jpeg","image/png","image/webp"].includes(file.type) && file.size <= 15*1024*1024;
+}
+function verdictHTML(result) {
+  const isAI = result.label === "AI_GENERATED";
+  return `<span class="tag ${isAI ? "ai" : "real"}">${isAI ? "AI-GENERATED" : "REAL"}</span>`;
+}
+function showResult(prefix, result) {
+  const isAI = result.label === "AI_GENERATED";
+  $(prefix+"Verdict").textContent = isAI ? "AI-GENERATED" : "REAL";
+  $(prefix+"Verdict").className = "verdict " + (isAI ? "ai" : "real");
+  $(prefix+"Confidence").textContent = (result.confidence*100).toFixed(2)+"%";
+  $(prefix+"Meter").style.width = (result.confidence*100)+"%";
+  $(prefix+"Real").textContent = (result.real_probability*100).toFixed(2)+"%";
+  $(prefix+"AI").textContent = (result.ai_generated_probability*100).toFixed(2)+"%";
+}
 
-function setFile(which, file) {
-  if (!file) return;
-  if (!["image/jpeg","image/png","image/webp"].includes(file.type)) {
-    setStatus("Please select JPG, PNG, or WEBP images only.", true); return;
-  }
-  if (file.size > 15*1024*1024) {
-    setStatus("Each image must be 15 MB or smaller.", true); return;
-  }
-  files[which] = file;
-  if (objectUrls[which]) URL.revokeObjectURL(objectUrls[which]);
-  objectUrls[which] = URL.createObjectURL(file);
-  const cap = which[0].toUpperCase()+which.slice(1);
-  $("drop"+cap).style.display = "none";
-  $(which+"Preview").src = objectUrls[which];
-  $(which+"Preview").style.display = "block";
-  $(which+"Meta").style.display = "flex";
-  $(which+"Name").textContent = file.name + " · " + formatBytes(file.size);
-  updateButton();
-  resetResults();
-  setStatus(files.original && files.compressed ? "Both images are ready. Run the comparison." : "Upload the other image to continue.");
-}
-function resetOne(which) {
-  files[which] = null;
-  if (objectUrls[which]) URL.revokeObjectURL(objectUrls[which]);
-  objectUrls[which] = null;
-  const cap = which[0].toUpperCase()+which.slice(1);
-  $(which+"Preview").removeAttribute("src");
-  $(which+"Preview").style.display = "none";
-  $(which+"Meta").style.display = "none";
-  $("drop"+cap).style.display = "flex";
-  $(which+"Input").value = "";
-  updateButton(); resetResults();
-  setStatus("Image removed. Select both images to compare.");
-}
-function resetResults() {
-  ["original","compressed"].forEach(which => {
-    $(which+"Verdict").textContent = "AWAITING ANALYSIS";
-    $(which+"Verdict").className = "verdict unknown";
-    $(which+"Confidence").textContent = "—";
-    $(which+"Bar").style.width = "0%";
-    $(which+"Real").textContent = "—";
-    $(which+"AI").textContent = "—";
+document.querySelectorAll(".tab[data-tab]").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll(".tab[data-tab]").forEach(b=>b.classList.toggle("active",b===button));
+    document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.id===button.dataset.tab));
   });
-  $("originalSize").textContent = "—";
-  $("compressedSize").textContent = "—";
-  $("reduction").textContent = "—";
-}
-["original","compressed"].forEach(which => {
-  $(which+"Input").addEventListener("change", e => setFile(which,e.target.files[0]));
-  const drop = $("drop"+which[0].toUpperCase()+which.slice(1));
-  ["dragenter","dragover"].forEach(type => drop.addEventListener(type,e => {e.preventDefault();drop.classList.add("over");}));
-  ["dragleave","drop"].forEach(type => drop.addEventListener(type,e => {e.preventDefault();drop.classList.remove("over");}));
-  drop.addEventListener("drop",e => setFile(which,e.dataTransfer.files[0]));
 });
-document.querySelectorAll("[data-remove]").forEach(btn => btn.addEventListener("click",()=>resetOne(btn.dataset.remove)));
 
-function showVerdict(which, data) {
-  const ai = data.label === "AI_GENERATED";
-  const card = $(which+"Verdict");
-  card.textContent = ai ? "AI-GENERATED / FAKE" : "AUTHENTIC (REAL)";
-  card.className = "verdict " + (ai ? "ai" : "real");
-  $(which+"Confidence").textContent = (data.confidence*100).toFixed(2)+"%";
-  $(which+"Bar").style.width = (data.confidence*100)+"%";
-  $(which+"Real").textContent = (data.real_probability*100).toFixed(2)+"%";
-  $(which+"AI").textContent = (data.ai_generated_probability*100).toFixed(2)+"%";
-}
-$("analyze").addEventListener("click", async () => {
-  if (!files.original || !files.compressed) return;
-  const btn = $("analyze");
-  btn.disabled = true; btn.textContent = "Analyzing both images...";
-  setStatus("Running both images through your local ViT model...");
-  try {
-    const form = new FormData();
-    form.append("original", files.original);
-    form.append("compressed", files.compressed);
-    const response = await fetch("/api/compare", {method:"POST", body:form});
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || "API request failed");
-    showVerdict("original",data.original);
-    showVerdict("compressed",data.compressed);
-    $("originalSize").textContent = formatBytes(data.files.original_size_bytes);
-    $("compressedSize").textContent = formatBytes(data.files.compressed_size_bytes);
-    $("reduction").textContent = data.files.size_reduction_percent.toFixed(2)+"%";
-    $("connection").textContent = "CONNECTED · "+data.device.toUpperCase();
-    setStatus("Comparison completed successfully using the local model.");
-  } catch(err) {
-    setStatus("Analysis failed: "+err.message, true);
-  } finally {
-    btn.disabled = !(files.original && files.compressed);
-    btn.textContent = "Run Original & Compressed Analysis";
-  }
+$("singleInput").addEventListener("change", e => {
+  const file=e.target.files[0];
+  if (!validFile(file)) { setStatus("singleStatus","Choose a JPG, PNG or WEBP image up to 15 MB.",true); return; }
+  singleFile=file; $("singleFileName").textContent=file.name+" · "+bytes(file.size);
+  $("singleRun").disabled=false; $("singleResult").style.display="none";
+  $("singlePreview").src=URL.createObjectURL(file);
+  setStatus("singleStatus","Image ready. Run the main model.");
 });
+$("singleClear").addEventListener("click",()=>{
+  singleFile=null;$("singleInput").value="";$("singleFileName").textContent="No image selected";
+  $("singleRun").disabled=true;$("singleResult").style.display="none";setStatus("singleStatus","Select an image to begin.");
+});
+$("singleRun").addEventListener("click",async()=>{
+  if(!singleFile)return;
+  $("singleRun").disabled=true;setStatus("singleStatus","Analyzing with the main ViT...");
+  try{
+    const form=new FormData();form.append("image",singleFile);
+    const response=await fetch("/api/predict",{method:"POST",body:form});
+    const data=await response.json();if(!response.ok)throw new Error(data.detail||"Request failed");
+    showResult("single",data.result);$("singleResult").style.display="block";
+    setStatus("singleStatus","Analysis completed using "+data.model+".");
+  }catch(err){setStatus("singleStatus","Analysis failed: "+err.message,true);}
+  finally{$("singleRun").disabled=!singleFile;}
+});
+
+$("compressionInput").addEventListener("change",e=>{
+  const file=e.target.files[0];
+  if(!validFile(file)){setStatus("compressionStatus","Choose a JPG, PNG or WEBP image up to 15 MB.",true);return;}
+  compressionFile=file;$("compressionFileName").textContent=file.name+" · "+bytes(file.size);
+  $("compressionRun").disabled=false;$("compressionResults").style.display="none";
+  setStatus("compressionStatus","Image ready. Generate versions and analyze.");
+});
+$("compressionClear").addEventListener("click",()=>{
+  compressionFile=null;$("compressionInput").value="";$("compressionFileName").textContent="No image selected";
+  $("compressionRun").disabled=true;$("compressionResults").style.display="none";
+  setStatus("compressionStatus","Select one image to begin.");
+});
+$("compressionRun").addEventListener("click",async()=>{
+  if(!compressionFile)return;
+  $("compressionRun").disabled=true;setStatus("compressionStatus","Generating six versions and running both models...");
+  try{
+    const form=new FormData();form.append("image",compressionFile);
+    const response=await fetch("/api/compression-analysis",{method:"POST",body:form});
+    const data=await response.json();if(!response.ok)throw new Error(data.detail||"Request failed");
+    $("variantGrid").innerHTML="";$("comparisonRows").innerHTML="";
+    data.variants.forEach(item=>{
+      const card=document.createElement("article");card.className="variant-card";
+      card.innerHTML=`
+        <img src="${item.preview}" alt="${item.name} preview">
+        <div class="variant-head"><span>${item.name}</span><span class="small">${bytes(item.size_bytes)}</span></div>
+        <div class="model-result"><strong>Main ViT</strong><div>${verdictHTML(item.baseline)}</div><div class="small">Confidence: ${(item.baseline.confidence*100).toFixed(2)}%</div></div>
+        <div class="model-result"><strong>Compression-aware ViT</strong><div>${verdictHTML(item.compression_aware)}</div><div class="small">Confidence: ${(item.compression_aware.confidence*100).toFixed(2)}%</div></div>`;
+      $("variantGrid").appendChild(card);
+      const row=document.createElement("tr");
+      row.innerHTML=`<td>${item.name}</td><td>${bytes(item.size_bytes)}</td><td>${item.size_reduction_percent.toFixed(2)}%</td><td>${verdictHTML(item.baseline)} ${(item.baseline.confidence*100).toFixed(1)}%</td><td>${verdictHTML(item.compression_aware)} ${(item.compression_aware.confidence*100).toFixed(1)}%</td>`;
+      $("comparisonRows").appendChild(row);
+    });
+    $("compressionNote").textContent=data.note+" Both models were evaluated on the exact same generated image variants.";
+    $("compressionResults").style.display="block";
+    setStatus("Compression analysis completed on "+data.device+".");
+  }catch(err){setStatus("Analysis failed: "+err.message,true);}
+  finally{$("compressionRun").disabled=!compressionFile;}
+});
+
 fetch("/api/health").then(r=>r.json()).then(data=>{
-  $("connection").textContent = data.model_loaded ? "MODEL LOADED · "+data.device.toUpperCase() : "LOCAL API READY";
+  $("connection").textContent=data.baseline_loaded&&data.compression_loaded?"BOTH MODELS LOADED": "LOCAL API · MODELS LOAD ON FIRST ANALYSIS";
 }).catch(()=>{$("connection").textContent="API STATUS UNKNOWN";});
 </script>
 </body>
