@@ -3,242 +3,1245 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SecuriSight | Image Verification</title>
+<title>SecuriSight | Three-Model Image Verification</title>
+
 <style>
-:root{--bg:#0e1017;--sidebar:#20232d;--panel:#171a23;--panel2:#202530;--line:#343b49;--text:#f4f6fb;--muted:#a0a8b7;--blue:#3895ed;--green:#22c55e;--red:#ff626b;--amber:#f5b544}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;min-height:100vh}
-.layout{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100vh}
-aside{background:var(--sidebar);padding:30px 22px;border-right:1px solid #303744}
-.brand{font-size:24px;font-weight:800;display:flex;align-items:center;gap:11px;margin:35px 0 42px}
-.shield{width:38px;height:38px;border-radius:12px;background:#183d69;display:grid;place-items:center;color:#62b7ff;font-size:21px}
-.side-line{height:1px;background:#414957;margin-bottom:28px}
-.info{background:#293d59;color:#b6d9ff;border-radius:11px;padding:15px;line-height:1.9;font-size:13px}
-.info b{color:#70b8ff}
-main{padding:38px clamp(18px,4vw,62px) 55px;max-width:1500px;width:100%;margin:auto}
-.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:28px}
-.pill{font-size:11px;color:#8dc7ff;background:#152c45;padding:9px 12px;border-radius:30px;font-weight:700;letter-spacing:.6px}
-h1{font-size:clamp(27px,3vw,38px);margin:0 0 9px;letter-spacing:-.7px}
-.subtitle{color:var(--muted);line-height:1.6;margin:0 0 25px}
-.tabs{display:flex;gap:10px;flex-wrap:wrap;margin:25px 0}
-.tab{border:1px solid var(--line);background:var(--panel);color:#cbd2df;padding:12px 17px;border-radius:9px;cursor:pointer;font-weight:700}
-.tab.active{background:#173b5e;border-color:#347fbd;color:#fff}
-.panel{display:none}.panel.active{display:block}
-.upload-card,.result-card,.variant-card,.summary{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:18px;min-width:0}
-.upload-card{max-width:720px}
-.drop{min-height:210px;border:2px dashed #454d5d;border-radius:10px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;cursor:pointer;padding:18px;background:#141720}
-.drop:hover{border-color:var(--blue);background:#172333}
-.upload-symbol{width:48px;height:48px;border-radius:13px;background:#1c3652;color:#73baff;display:grid;place-items:center;font-size:25px;margin-bottom:12px}
-.drop strong{font-size:15px;margin-bottom:7px}.drop span{font-size:12px;color:var(--muted);line-height:1.6}
-.drop input{display:none}
-.fileline{display:flex;justify-content:space-between;gap:10px;align-items:center;color:var(--muted);font-size:12px;margin-top:12px;overflow-wrap:anywhere}
-.action{margin:17px 0 10px;width:100%;height:48px;border:0;border-radius:9px;background:var(--red);color:white;font-size:14px;font-weight:700;cursor:pointer}
-.action:disabled{opacity:.45;cursor:not-allowed}
-.status{color:var(--muted);font-size:13px;min-height:22px;margin:8px 0 18px}.error{color:#ff858b}
-.result-card{max-width:720px;margin-top:18px;display:none}
-.verdict{padding:13px 14px;border-radius:9px;font-weight:800;font-size:14px;margin:12px 0}
-.verdict.real{background:#143b2a;color:#42df88}.verdict.ai{background:#482328;color:#ff858b}
-.metric{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:13px;margin:12px 0}
-.meter{height:8px;background:#303642;border-radius:20px;overflow:hidden}.meter>div{height:100%;background:var(--blue);width:0}
-.section-title{font-size:21px;margin:30px 0 14px}
-.table-wrap{overflow-x:auto;margin-top:16px}
-table{width:100%;border-collapse:collapse;min-width:650px;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-th,td{text-align:left;padding:12px;border-bottom:1px solid var(--line);font-size:12px}
-th{color:#aebbd0;background:#202530}td{color:#e4e8ef}
-.tag{display:inline-block;padding:5px 8px;border-radius:6px;font-size:11px;font-weight:800}
-.tag.real{background:#143b2a;color:#42df88}.tag.ai{background:#482328;color:#ff858b}
-.variants{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
-.variant-card img{width:100%;height:180px;object-fit:contain;background:#0c0e14;border-radius:8px}
-.variant-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:12px 0;font-weight:800}
-.variant-card .small{font-size:11px;color:var(--muted);margin:7px 0}
-.model-result{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
-.model-result strong{font-size:12px}.model-result .verdict{margin:8px 0;padding:8px 10px;font-size:11px}
-.note{color:var(--muted);font-size:12px;line-height:1.6;margin-top:18px}
-footer{text-align:center;color:#747b89;font-size:12px;margin-top:35px}
-@media(max-width:950px){.layout{grid-template-columns:1fr}aside{padding:14px 20px}.brand{margin:0;font-size:21px}.side-line,.info{display:none}main{padding-top:25px}}
-@media(max-width:700px){.variants{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:480px){.variants{grid-template-columns:1fr}.variant-card img{height:220px}.topline{align-items:flex-start;flex-direction:column}}
+:root {
+  --bg: #0e1017;
+  --sidebar: #20232d;
+  --panel: #171a23;
+  --panel2: #202530;
+  --line: #343b49;
+  --text: #f4f6fb;
+  --muted: #a0a8b7;
+  --blue: #3895ed;
+  --green: #22c55e;
+  --red: #ff626b;
+  --amber: #f5b544;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, Arial, sans-serif;
+  min-height: 100vh;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+aside {
+  background: var(--sidebar);
+  padding: 30px 22px;
+  border-right: 1px solid #303744;
+}
+
+.brand {
+  font-size: 24px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 35px 0 42px;
+}
+
+.shield {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #183d69;
+  display: grid;
+  place-items: center;
+  color: #62b7ff;
+  font-size: 21px;
+}
+
+.side-line {
+  height: 1px;
+  background: #414957;
+  margin-bottom: 28px;
+}
+
+.info {
+  background: #293d59;
+  color: #b6d9ff;
+  border-radius: 11px;
+  padding: 15px;
+  line-height: 1.9;
+  font-size: 13px;
+}
+
+.info b {
+  color: #70b8ff;
+}
+
+main {
+  padding: 38px clamp(18px, 4vw, 62px) 55px;
+  max-width: 1600px;
+  width: 100%;
+  margin: auto;
+}
+
+.topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  font-size: 11px;
+  color: #8dc7ff;
+  background: #152c45;
+  padding: 9px 12px;
+  border-radius: 30px;
+  font-weight: 700;
+  letter-spacing: .6px;
+}
+
+h1 {
+  font-size: clamp(27px, 3vw, 38px);
+  margin: 0 0 9px;
+  letter-spacing: -.7px;
+}
+
+.subtitle {
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0 0 25px;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 25px 0;
+}
+
+.tab {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: #cbd2df;
+  padding: 12px 17px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.tab.active {
+  background: #173b5e;
+  border-color: #347fbd;
+  color: #fff;
+}
+
+.panel {
+  display: none;
+}
+
+.panel.active {
+  display: block;
+}
+
+.upload-card,
+.result-card,
+.variant-card,
+.model-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 18px;
+  min-width: 0;
+}
+
+.upload-card {
+  max-width: 760px;
+}
+
+.drop {
+  min-height: 210px;
+  border: 2px dashed #454d5d;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  padding: 18px;
+  background: #141720;
+}
+
+.drop:hover {
+  border-color: var(--blue);
+  background: #172333;
+}
+
+.upload-symbol {
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+  background: #1c3652;
+  color: #73baff;
+  display: grid;
+  place-items: center;
+  font-size: 25px;
+  margin-bottom: 12px;
+}
+
+.drop strong {
+  font-size: 15px;
+  margin-bottom: 7px;
+}
+
+.drop span {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.drop input {
+  display: none;
+}
+
+.fileline {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 12px;
+  overflow-wrap: anywhere;
+}
+
+.action {
+  margin: 17px 0 10px;
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--red);
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.action:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.status {
+  color: var(--muted);
+  font-size: 13px;
+  min-height: 22px;
+  margin: 8px 0 18px;
+}
+
+.error {
+  color: #ff858b;
+}
+
+.section-title {
+  font-size: 21px;
+  margin: 30px 0 14px;
+}
+
+.result-card {
+  margin-top: 18px;
+  display: none;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: 9px;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.model-card h3 {
+  font-size: 15px;
+  margin: 0 0 15px;
+  min-height: 36px;
+}
+
+.verdict {
+  padding: 11px 12px;
+  border-radius: 9px;
+  font-weight: 800;
+  font-size: 13px;
+  margin: 12px 0;
+  text-align: center;
+}
+
+.verdict.real {
+  background: #143b2a;
+  color: #42df88;
+}
+
+.verdict.ai {
+  background: #482328;
+  color: #ff858b;
+}
+
+.metric {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  margin: 12px 0;
+}
+
+.metric strong {
+  color: var(--text);
+}
+
+.meter {
+  height: 8px;
+  background: #303642;
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 10px 0 17px;
+}
+
+.meter > div {
+  height: 100%;
+  background: var(--blue);
+  width: 0;
+  transition: width .3s;
+}
+
+.variants {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.variant-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: contain;
+  background: #0c0e14;
+  border-radius: 8px;
+}
+
+.variant-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+  margin: 12px 0;
+  font-weight: 800;
+}
+
+.small {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.model-result {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+.model-result strong {
+  font-size: 12px;
+}
+
+.model-result .verdict {
+  margin: 8px 0;
+  padding: 8px 10px;
+  font-size: 11px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 850px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+th {
+  color: #aebbd0;
+  background: #202530;
+}
+
+td {
+  color: #e4e8ef;
+}
+
+.tag {
+  display: inline-block;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.tag.real {
+  background: #143b2a;
+  color: #42df88;
+}
+
+.tag.ai {
+  background: #482328;
+  color: #ff858b;
+}
+
+.note {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+  margin-top: 18px;
+}
+
+footer {
+  text-align: center;
+  color: #747b89;
+  font-size: 12px;
+  margin-top: 35px;
+}
+
+@media (max-width: 1100px) {
+  .model-grid,
+  .variants {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 950px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  aside {
+    padding: 14px 20px;
+  }
+
+  .brand {
+    margin: 0;
+    font-size: 21px;
+  }
+
+  .side-line,
+  .info {
+    display: none;
+  }
+
+  main {
+    padding-top: 25px;
+  }
+}
+
+@media (max-width: 600px) {
+  .model-grid,
+  .variants {
+    grid-template-columns: 1fr;
+  }
+
+  .variant-card img {
+    height: 220px;
+  }
+
+  .topline {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
 </style>
 </head>
+
 <body>
+
 <div class="layout">
+
 <aside>
-  <div class="brand"><div class="shield">⬟</div>SecuriSight</div>
+  <div class="brand">
+    <div class="shield">⬟</div>
+    SecuriSight
+  </div>
+
   <div class="side-line"></div>
+
   <div class="info">
     <b>Backbone:</b> Vision Transformer (ViT)<br>
-    <b>Main model:</b> Original image detection<br>
-    <b>Second model:</b> Compression-aware ViT<br>
+    <b>Model 1:</b> Original ViT (v1)<br>
+    <b>Model 2:</b> Fine-tuned ViT (v2)<br>
+    <b>Model 3:</b> Compression-aware ViT<br>
     <b>Framework:</b> PyTorch<br>
     <b>Mode:</b> Local model inference
   </div>
 </aside>
+
 <main>
-  <div class="topline"><span class="pill">IMAGE VERIFICATION LAB</span><span class="pill" id="connection">CHECKING MODELS...</span></div>
+
+  <div class="topline">
+    <span class="pill">THREE-MODEL IMAGE VERIFICATION LAB</span>
+    <span class="pill" id="connection">CHECKING MODELS...</span>
+  </div>
+
   <h1>SecuriSight Image Analysis</h1>
-  <p class="subtitle">Choose standard image detection or test how both models respond to JPEG compression.</p>
+
+  <p class="subtitle">
+    Analyze images using three ViT models or evaluate their behaviour
+    under different JPEG compression levels.
+  </p>
 
   <nav class="tabs">
-    <button class="tab active" data-tab="single">Image Detection</button>
-    <button class="tab" data-tab="compression">Compression Analysis</button>
+    <button class="tab active" data-tab="single">
+      Image Detection
+    </button>
+
+    <button class="tab" data-tab="compression">
+      Compression Analysis
+    </button>
   </nav>
 
+  <!-- IMAGE DETECTION -->
+
   <section class="panel active" id="single">
-    <h2 class="section-title">Check whether an image is real or AI-generated</h2>
+
+    <h2 class="section-title">
+      Check whether an image is real or AI-generated
+    </h2>
+
     <div class="upload-card">
+
       <label class="drop" for="singleInput">
-        <div class="upload-symbol">＋</div><strong>Upload an image</strong>
-        <span>Click to browse or drop an image here<br>JPG, PNG, WEBP · Maximum 15 MB</span>
-        <input id="singleInput" type="file" accept="image/jpeg,image/png,image/webp">
+        <div class="upload-symbol">＋</div>
+
+        <strong>Upload an image</strong>
+
+        <span>
+          Click to browse or drop an image here<br>
+          JPG, PNG, WEBP · Maximum 15 MB
+        </span>
+
+        <input
+          id="singleInput"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+        >
       </label>
-      <div class="fileline"><span id="singleFileName">No image selected</span><button class="tab" id="singleClear" type="button">Remove</button></div>
-      <button class="action" id="singleRun" disabled>Analyze with Main ViT</button>
-      <div class="status" id="singleStatus" aria-live="polite">Select an image to begin.</div>
+
+      <div class="fileline">
+        <span id="singleFileName">No image selected</span>
+
+        <button class="tab" id="singleClear" type="button">
+          Remove
+        </button>
+      </div>
+
+      <button class="action" id="singleRun" disabled>
+        Analyze with All Three Models
+      </button>
+
+      <div class="status" id="singleStatus" aria-live="polite">
+        Select an image to begin.
+      </div>
+
     </div>
+
     <article class="result-card" id="singleResult">
-      <h2>Main ViT Result</h2>
-      <img id="singlePreview" alt="Uploaded image preview" style="max-width:100%;max-height:300px;object-fit:contain;border-radius:9px">
-      <div class="verdict" id="singleVerdict"></div>
-      <div class="metric"><span>Confidence</span><strong id="singleConfidence"></strong></div>
-      <div class="meter"><div id="singleMeter"></div></div>
-      <div class="metric"><span>REAL probability</span><strong id="singleReal"></strong></div>
-      <div class="metric"><span>AI-generated probability</span><strong id="singleAI"></strong></div>
+
+      <h2>Model Prediction Results</h2>
+
+      <img
+        id="singlePreview"
+        class="preview-image"
+        alt="Uploaded image preview"
+      >
+
+      <div class="model-grid" id="singleModelGrid"></div>
+
     </article>
+
   </section>
+
+  <!-- COMPRESSION ANALYSIS -->
 
   <section class="panel" id="compression">
-    <h2 class="section-title">Compression robustness test</h2>
-    <p class="subtitle">Upload one image. SecuriSight automatically creates the original plus five JPEG quality versions and runs both models on every version.</p>
+
+    <h2 class="section-title">
+      Compression robustness test
+    </h2>
+
+    <p class="subtitle">
+      Upload one image. SecuriSight creates the original plus five JPEG
+      quality versions and runs all three models on every version.
+    </p>
+
     <div class="upload-card">
+
       <label class="drop" for="compressionInput">
-        <div class="upload-symbol">＋</div><strong>Upload one image for compression testing</strong>
-        <span>JPG, PNG, WEBP · Maximum 15 MB<br>Versions: Original, Q20, Q40, Q60, Q80, Q100</span>
-        <input id="compressionInput" type="file" accept="image/jpeg,image/png,image/webp">
+        <div class="upload-symbol">＋</div>
+
+        <strong>Upload one image for compression testing</strong>
+
+        <span>
+          JPG, PNG, WEBP · Maximum 15 MB<br>
+          Versions: Original, Q20, Q40, Q60, Q80, Q100
+        </span>
+
+        <input
+          id="compressionInput"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+        >
       </label>
-      <div class="fileline"><span id="compressionFileName">No image selected</span><button class="tab" id="compressionClear" type="button">Remove</button></div>
-      <button class="action" id="compressionRun" disabled>Generate Versions & Analyze</button>
-      <div class="status" id="compressionStatus" aria-live="polite">Select one image to begin.</div>
+
+      <div class="fileline">
+        <span id="compressionFileName">No image selected</span>
+
+        <button class="tab" id="compressionClear" type="button">
+          Remove
+        </button>
+      </div>
+
+      <button class="action" id="compressionRun" disabled>
+        Generate Versions & Analyze
+      </button>
+
+      <div class="status" id="compressionStatus" aria-live="polite">
+        Select one image to begin.
+      </div>
+
     </div>
+
     <div id="compressionResults" style="display:none">
-      <h2 class="section-title">Original and compressed versions</h2>
+
+      <h2 class="section-title">
+        Original and compressed versions
+      </h2>
+
       <div class="variants" id="variantGrid"></div>
-      <h2 class="section-title">Prediction comparison</h2>
+
+      <h2 class="section-title">
+        Three-model prediction comparison
+      </h2>
+
       <div class="table-wrap">
+
         <table>
-          <thead><tr><th>Version</th><th>File size</th><th>Size reduction</th><th>Main ViT</th><th>Compression-aware ViT</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Version</th>
+              <th>File Size</th>
+              <th>Size Reduction</th>
+              <th>Original ViT v1</th>
+              <th>Fine-tuned ViT v2</th>
+              <th>Compression-aware ViT</th>
+            </tr>
+          </thead>
+
           <tbody id="comparisonRows"></tbody>
         </table>
+
       </div>
+
       <p class="note" id="compressionNote"></p>
+
     </div>
+
   </section>
-  <p class="note">Confidence is the model's softmax score, not a guarantee of authenticity. JPEG Q100 is still a re-encoded JPEG. Compression testing measures model behaviour; it does not establish whether an image is genuinely authentic.</p>
-  <footer>SecuriSight · Local AI Image Verification · Images are processed by your local API</footer>
+
+  <p class="note">
+    Model confidence is a softmax score, not a guarantee of authenticity.
+    JPEG Q100 is still a re-encoded JPEG. Compression analysis measures
+    how model predictions change; it does not establish whether an image
+    is genuinely authentic.
+  </p>
+
+  <footer>
+    SecuriSight · Three-Model AI Image Verification · Local API Processing
+  </footer>
+
 </main>
 </div>
+
 <script>
 const $ = id => document.getElementById(id);
-let singleFile = null, compressionFile = null;
 
-function setStatus(id, message, error=false) {
+let singleFile = null;
+let compressionFile = null;
+
+const MODEL_INFO = {
+  baseline: {
+    name: "Original ViT (v1)"
+  },
+  finetuned: {
+    name: "Fine-tuned ViT (v2)"
+  },
+  compression: {
+    name: "Compression-aware ViT"
+  }
+};
+
+function setStatus(id, message, error = false) {
   $(id).textContent = message;
   $(id).classList.toggle("error", error);
 }
+
 function bytes(value) {
-  if (value < 1024) return value + " B";
-  if (value < 1024*1024) return (value/1024).toFixed(1) + " KB";
-  return (value/(1024*1024)).toFixed(2) + " MB";
+  if (value < 1024) {
+    return value + " B";
+  }
+
+  if (value < 1024 * 1024) {
+    return (value / 1024).toFixed(1) + " KB";
+  }
+
+  return (value / (1024 * 1024)).toFixed(2) + " MB";
 }
+
 function validFile(file) {
-  return file && ["image/jpeg","image/png","image/webp"].includes(file.type) && file.size <= 15*1024*1024;
+  return file &&
+    ["image/jpeg", "image/png", "image/webp"].includes(file.type) &&
+    file.size <= 15 * 1024 * 1024;
 }
+
+function isAI(result) {
+  return result.label === "AI_GENERATED";
+}
+
 function verdictHTML(result) {
-  const isAI = result.label === "AI_GENERATED";
-  return `<span class="tag ${isAI ? "ai" : "real"}">${isAI ? "AI-GENERATED" : "REAL"}</span>`;
+  const ai = isAI(result);
+
+  return `
+    <span class="tag ${ai ? "ai" : "real"}">
+      ${ai ? "AI-GENERATED" : "REAL"}
+    </span>
+  `;
 }
-function showResult(prefix, result) {
-  const isAI = result.label === "AI_GENERATED";
-  $(prefix+"Verdict").textContent = isAI ? "AI-GENERATED" : "REAL";
-  $(prefix+"Verdict").className = "verdict " + (isAI ? "ai" : "real");
-  $(prefix+"Confidence").textContent = (result.confidence*100).toFixed(2)+"%";
-  $(prefix+"Meter").style.width = (result.confidence*100)+"%";
-  $(prefix+"Real").textContent = (result.real_probability*100).toFixed(2)+"%";
-  $(prefix+"AI").textContent = (result.ai_generated_probability*100).toFixed(2)+"%";
+
+function modelCardHTML(name, result) {
+  const ai = isAI(result);
+  const confidence = (result.confidence * 100).toFixed(2);
+  const real = (result.real_probability * 100).toFixed(2);
+  const generated = (
+    result.ai_generated_probability * 100
+  ).toFixed(2);
+
+  return `
+    <article class="model-card">
+
+      <h3>${name}</h3>
+
+      <div class="verdict ${ai ? "ai" : "real"}">
+        ${ai ? "AI-GENERATED" : "REAL"}
+      </div>
+
+      <div class="metric">
+        <span>Confidence</span>
+        <strong>${confidence}%</strong>
+      </div>
+
+      <div class="meter">
+        <div style="width:${confidence}%"></div>
+      </div>
+
+      <div class="metric">
+        <span>REAL probability</span>
+        <strong>${real}%</strong>
+      </div>
+
+      <div class="metric">
+        <span>AI-generated probability</span>
+        <strong>${generated}%</strong>
+      </div>
+
+    </article>
+  `;
 }
+
+function renderAllModelCards(container, results) {
+  container.innerHTML = "";
+
+  for (const [key, info] of Object.entries(MODEL_INFO)) {
+    const result = results[key];
+
+    if (!result) {
+      continue;
+    }
+
+    container.insertAdjacentHTML(
+      "beforeend",
+      modelCardHTML(info.name, result)
+    );
+  }
+}
+
+// Tabs
 
 document.querySelectorAll(".tab[data-tab]").forEach(button => {
   button.addEventListener("click", () => {
-    document.querySelectorAll(".tab[data-tab]").forEach(b=>b.classList.toggle("active",b===button));
-    document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.id===button.dataset.tab));
+
+    document.querySelectorAll(".tab[data-tab]").forEach(b => {
+      b.classList.toggle("active", b === button);
+    });
+
+    document.querySelectorAll(".panel").forEach(panel => {
+      panel.classList.toggle(
+        "active",
+        panel.id === button.dataset.tab
+      );
+    });
+
   });
 });
 
-$("singleInput").addEventListener("change", e => {
-  const file=e.target.files[0];
-  if (!validFile(file)) { setStatus("singleStatus","Choose a JPG, PNG or WEBP image up to 15 MB.",true); return; }
-  singleFile=file; $("singleFileName").textContent=file.name+" · "+bytes(file.size);
-  $("singleRun").disabled=false; $("singleResult").style.display="none";
-  $("singlePreview").src=URL.createObjectURL(file);
-  setStatus("singleStatus","Image ready. Run the main model.");
-});
-$("singleClear").addEventListener("click",()=>{
-  singleFile=null;$("singleInput").value="";$("singleFileName").textContent="No image selected";
-  $("singleRun").disabled=true;$("singleResult").style.display="none";setStatus("singleStatus","Select an image to begin.");
-});
-$("singleRun").addEventListener("click",async()=>{
-  if(!singleFile)return;
-  $("singleRun").disabled=true;setStatus("singleStatus","Analyzing with the main ViT...");
-  try{
-    const form=new FormData();form.append("image",singleFile);
-    const response=await fetch("/api/predict",{method:"POST",body:form});
-    const data=await response.json();if(!response.ok)throw new Error(data.detail||"Request failed");
-    showResult("single",data.result);$("singleResult").style.display="block";
-    setStatus("singleStatus","Analysis completed using "+data.model+".");
-  }catch(err){setStatus("singleStatus","Analysis failed: "+err.message,true);}
-  finally{$("singleRun").disabled=!singleFile;}
+// SINGLE IMAGE SELECTION
+
+$("singleInput").addEventListener("change", event => {
+
+  const file = event.target.files[0];
+
+  if (!validFile(file)) {
+    singleFile = null;
+    $("singleRun").disabled = true;
+
+    setStatus(
+      "singleStatus",
+      "Choose a JPG, PNG or WEBP image up to 15 MB.",
+      true
+    );
+
+    return;
+  }
+
+  singleFile = file;
+
+  $("singleFileName").textContent =
+    file.name + " · " + bytes(file.size);
+
+  $("singleRun").disabled = false;
+
+  $("singleResult").style.display = "none";
+
+  $("singlePreview").src = URL.createObjectURL(file);
+
+  setStatus(
+    "singleStatus",
+    "Image ready. Run all three models."
+  );
+
 });
 
-$("compressionInput").addEventListener("change",e=>{
-  const file=e.target.files[0];
-  if(!validFile(file)){setStatus("compressionStatus","Choose a JPG, PNG or WEBP image up to 15 MB.",true);return;}
-  compressionFile=file;$("compressionFileName").textContent=file.name+" · "+bytes(file.size);
-  $("compressionRun").disabled=false;$("compressionResults").style.display="none";
-  setStatus("compressionStatus","Image ready. Generate versions and analyze.");
+$("singleClear").addEventListener("click", () => {
+
+  singleFile = null;
+
+  $("singleInput").value = "";
+
+  $("singleFileName").textContent = "No image selected";
+
+  $("singleRun").disabled = true;
+
+  $("singleResult").style.display = "none";
+
+  $("singlePreview").removeAttribute("src");
+
+  setStatus(
+    "singleStatus",
+    "Select an image to begin."
+  );
+
 });
-$("compressionClear").addEventListener("click",()=>{
-  compressionFile=null;$("compressionInput").value="";$("compressionFileName").textContent="No image selected";
-  $("compressionRun").disabled=true;$("compressionResults").style.display="none";
-  setStatus("compressionStatus","Select one image to begin.");
+
+// SINGLE IMAGE PREDICTION
+
+$("singleRun").addEventListener("click", async () => {
+
+  if (!singleFile) {
+    return;
+  }
+
+  $("singleRun").disabled = true;
+
+  setStatus(
+    "singleStatus",
+    "Analyzing image with all three ViT models..."
+  );
+
+  try {
+
+    const form = new FormData();
+
+    form.append("image", singleFile);
+
+    const response = await fetch(
+      "/api/predict",
+      {
+        method: "POST",
+        body: form
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || "Request failed");
+    }
+
+    renderAllModelCards(
+      $("singleModelGrid"),
+      data.results
+    );
+
+    $("singleResult").style.display = "block";
+
+    setStatus(
+      "singleStatus",
+      "Analysis completed using all three models on " +
+      data.device + "."
+    );
+
+  } catch (error) {
+
+    setStatus(
+      "singleStatus",
+      "Analysis failed: " + error.message,
+      true
+    );
+
+  } finally {
+
+    $("singleRun").disabled = !singleFile;
+
+  }
+
 });
-$("compressionRun").addEventListener("click",async()=>{
-  if(!compressionFile)return;
-  $("compressionRun").disabled=true;setStatus("compressionStatus","Generating six versions and running both models...");
-  try{
-    const form=new FormData();form.append("image",compressionFile);
-    const response=await fetch("/api/compression-analysis",{method:"POST",body:form});
-    const data=await response.json();if(!response.ok)throw new Error(data.detail||"Request failed");
-    $("variantGrid").innerHTML="";$("comparisonRows").innerHTML="";
-    data.variants.forEach(item=>{
-      const card=document.createElement("article");card.className="variant-card";
-      card.innerHTML=`
-        <img src="${item.preview}" alt="${item.name} preview">
-        <div class="variant-head"><span>${item.name}</span><span class="small">${bytes(item.size_bytes)}</span></div>
-        <div class="model-result"><strong>Main ViT</strong><div>${verdictHTML(item.baseline)}</div><div class="small">Confidence: ${(item.baseline.confidence*100).toFixed(2)}%</div></div>
-        <div class="model-result"><strong>Compression-aware ViT</strong><div>${verdictHTML(item.compression_aware)}</div><div class="small">Confidence: ${(item.compression_aware.confidence*100).toFixed(2)}%</div></div>`;
+
+// COMPRESSION IMAGE SELECTION
+
+$("compressionInput").addEventListener("change", event => {
+
+  const file = event.target.files[0];
+
+  if (!validFile(file)) {
+
+    compressionFile = null;
+
+    $("compressionRun").disabled = true;
+
+    setStatus(
+      "compressionStatus",
+      "Choose a JPG, PNG or WEBP image up to 15 MB.",
+      true
+    );
+
+    return;
+  }
+
+  compressionFile = file;
+
+  $("compressionFileName").textContent =
+    file.name + " · " + bytes(file.size);
+
+  $("compressionRun").disabled = false;
+
+  $("compressionResults").style.display = "none";
+
+  setStatus(
+    "compressionStatus",
+    "Image ready. Generate versions and analyze."
+  );
+
+});
+
+$("compressionClear").addEventListener("click", () => {
+
+  compressionFile = null;
+
+  $("compressionInput").value = "";
+
+  $("compressionFileName").textContent = "No image selected";
+
+  $("compressionRun").disabled = true;
+
+  $("compressionResults").style.display = "none";
+
+  $("variantGrid").innerHTML = "";
+
+  $("comparisonRows").innerHTML = "";
+
+  setStatus(
+    "compressionStatus",
+    "Select one image to begin."
+  );
+
+});
+
+// COMPRESSION ANALYSIS
+
+$("compressionRun").addEventListener("click", async () => {
+
+  if (!compressionFile) {
+    return;
+  }
+
+  $("compressionRun").disabled = true;
+
+  setStatus(
+    "compressionStatus",
+    "Generating six versions and running all three models..."
+  );
+
+  try {
+
+    const form = new FormData();
+
+    form.append("image", compressionFile);
+
+    const response = await fetch(
+      "/api/compression-analysis",
+      {
+        method: "POST",
+        body: form
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || "Request failed");
+    }
+
+    $("variantGrid").innerHTML = "";
+
+    $("comparisonRows").innerHTML = "";
+
+    data.variants.forEach(item => {
+
+      // Create variant card
+
+      const card = document.createElement("article");
+
+      card.className = "variant-card";
+
+      const image = document.createElement("img");
+
+      image.src = item.preview;
+
+      image.alt = item.name + " preview";
+
+      card.appendChild(image);
+
+      const heading = document.createElement("div");
+
+      heading.className = "variant-head";
+
+      const versionName = document.createElement("span");
+
+      versionName.textContent = item.name;
+
+      const fileSize = document.createElement("span");
+
+      fileSize.className = "small";
+
+      fileSize.textContent = bytes(item.size_bytes);
+
+      heading.appendChild(versionName);
+
+      heading.appendChild(fileSize);
+
+      card.appendChild(heading);
+
+      // Display all three model results
+
+      for (const [key, info] of Object.entries(MODEL_INFO)) {
+
+        const result = item.results[key];
+
+        if (!result) {
+          continue;
+        }
+
+        const modelResult = document.createElement("div");
+
+        modelResult.className = "model-result";
+
+        const title = document.createElement("strong");
+
+        title.textContent = info.name;
+
+        modelResult.appendChild(title);
+
+        const verdict = document.createElement("div");
+
+        verdict.innerHTML = verdictHTML(result);
+
+        modelResult.appendChild(verdict);
+
+        const confidence = document.createElement("div");
+
+        confidence.className = "small";
+
+        confidence.textContent =
+          "Confidence: " +
+          (result.confidence * 100).toFixed(2) + "%";
+
+        modelResult.appendChild(confidence);
+
+        card.appendChild(modelResult);
+
+      }
+
       $("variantGrid").appendChild(card);
-      const row=document.createElement("tr");
-      row.innerHTML=`<td>${item.name}</td><td>${bytes(item.size_bytes)}</td><td>${item.size_reduction_percent.toFixed(2)}%</td><td>${verdictHTML(item.baseline)} ${(item.baseline.confidence*100).toFixed(1)}%</td><td>${verdictHTML(item.compression_aware)} ${(item.compression_aware.confidence*100).toFixed(1)}%</td>`;
+
+      // Create comparison table row
+
+      const row = document.createElement("tr");
+
+      const cells = [
+        item.name,
+        bytes(item.size_bytes),
+        item.size_reduction_percent.toFixed(2) + "%"
+      ];
+
+      for (const value of cells) {
+        const td = document.createElement("td");
+        td.textContent = value;
+        row.appendChild(td);
+      }
+
+      for (const key of Object.keys(MODEL_INFO)) {
+
+        const result = item.results[key];
+
+        const td = document.createElement("td");
+
+        if (result) {
+
+          td.innerHTML =
+            verdictHTML(result) +
+            " " +
+            (result.confidence * 100).toFixed(1) +
+            "%";
+
+        } else {
+
+          td.textContent = "Unavailable";
+
+        }
+
+        row.appendChild(td);
+
+      }
+
       $("comparisonRows").appendChild(row);
+
     });
-    $("compressionNote").textContent=data.note+" Both models were evaluated on the exact same generated image variants.";
-    $("compressionResults").style.display="block";
-    setStatus("Compression analysis completed on "+data.device+".");
-  }catch(err){setStatus("Analysis failed: "+err.message,true);}
-  finally{$("compressionRun").disabled=!compressionFile;}
+
+    $("compressionNote").textContent = data.note;
+
+    $("compressionResults").style.display = "block";
+
+    setStatus(
+      "compressionStatus",
+      "Compression analysis completed on " + data.device + "."
+    );
+
+  } catch (error) {
+
+    setStatus(
+      "compressionStatus",
+      "Analysis failed: " + error.message,
+      true
+    );
+
+  } finally {
+
+    $("compressionRun").disabled = !compressionFile;
+
+  }
+
 });
 
-fetch("/api/health").then(r=>r.json()).then(data=>{
-  $("connection").textContent=data.baseline_loaded&&data.compression_loaded?"BOTH MODELS LOADED": "LOCAL API · MODELS LOAD ON FIRST ANALYSIS";
-}).catch(()=>{$("connection").textContent="API STATUS UNKNOWN";});
+// MODEL CONNECTION STATUS
+
+async function checkModels() {
+
+  try {
+
+    const response = await fetch("/api/health");
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error("Health check failed");
+    }
+
+    const modelStatus = Object.values(data.models);
+
+    const loadedCount = modelStatus.filter(
+      model => model.loaded
+    ).length;
+
+    $("connection").textContent =
+      loadedCount + " / 3 MODELS LOADED";
+
+    if (loadedCount === 3) {
+
+      $("connection").style.color = "#42df88";
+
+    } else {
+
+      $("connection").style.color = "#f5b544";
+
+    }
+
+  } catch (error) {
+
+    $("connection").textContent = "API CONNECTION FAILED";
+
+    $("connection").style.color = "#ff858b";
+
+  }
+
+}
+
+checkModels();
+
 </script>
 </body>
 </html>

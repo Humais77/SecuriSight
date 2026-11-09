@@ -4,7 +4,7 @@ from PIL import Image
 from transformers import AutoImageProcessor, AutoModelForImageClassification
 
 ROOT = Path(__file__).resolve().parents[1]
-MODEL_DIR = ROOT / "outputs" / "vit-real-vs-ai"
+MODEL_PATH = ROOT / "outputs" / "vit-real-vs-ai-v2"
 
 def predict(path, model, processor, device):
     with Image.open(path) as im:
